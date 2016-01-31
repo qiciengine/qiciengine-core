@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ProgressBar测试</title>
+    <meta charset="UTF-8">
+
+    <style type="text/css">
+        div { padding: 10px; font-size: 1.5em; }
+    </style>
+
+    <script src="../lib/phaser.js" type="text/javascript"></script>
+    <script src="../build/qc-core-debug.js" type="text/javascript"></script>
+</head>
+<body style="margin: 0px 0px 0px 0px;">
+<script type="application/javascript" src="js/builtinStartGame.js"></script>
+
+<script>
+    var Assets = qc.Assets;
+    var value = 0;
+    var needProcessGameObject = [];
+
+
+
+    game._onFirstScenePreload = function() {
+        game.assets.load('firstaid', 'assets/sprites/firstaid.bin');
+        game.assets.load('monsters', 'assets/sprites/pixi_monsters.bin');
+        game.assets.load('ui_rect_gray', 'assets/sprites/ui_rect_gray.bin');
+        game.assets.load('ui_rect_white', 'assets/sprites/ui_rect_white.bin');
+    };
+
+    game._onFirstSceneLoaded = function() {
+        var bar;
+        bar = createProgress(10, 10, 400, 20, qc.ProgressBar.STYLE_HORIZONTAL, qc.ProgressBar.SHOW_PROCESSED, -1, false, true);
+        bar = createProgress(10, 40, 400, 20, qc.ProgressBar.STYLE_HORIZONTAL, qc.ProgressBar.SHOW_PROCESSED, -1, true, true);
+        bar = createProgress(10, 70, 400, 20, qc.ProgressBar.STYLE_HORIZONTAL, qc.ProgressBar.SHOW_REMAINED, -1, false, true);
+        bar = createProgress(10, 100, 400, 20, qc.ProgressBar.STYLE_HORIZONTAL, qc.ProgressBar.SHOW_REMAINED, -1, true, true);
+        bar = createProgress(10, 130, 400, 20, qc.ProgressBar.STYLE_HORIZONTAL, qc.ProgressBar.SHOW_PROCESSED, 0.2, false, true);
+        bar = createProgress(10, 160, 400, 20, qc.ProgressBar.STYLE_HORIZONTAL, qc.ProgressBar.SHOW_PROCESSED, 0.2, true, true);
+
+        bar = createProgress(10, 190, 150, 100, qc.ProgressBar.STYLE_CIRCLE, qc.ProgressBar.SHOW_PROCESSED, -1, false, true);
+        bar = createProgress(180, 190, 150, 100, qc.ProgressBar.STYLE_CIRCLE, qc.ProgressBar.SHOW_PROCESSED, -1, true, true);
+        bar = createProgress(350, 190, 150, 100, qc.ProgressBar.STYLE_CIRCLE, qc.ProgressBar.SHOW_REMAINED, -1, true, true);
+
+        bar = createProgress(180, 300, 150, 100, qc.ProgressBar.STYLE_CIRCLE, qc.ProgressBar.SHOW_PROCESSED, 0.2, true, true);
+        bar = createProgress(350, 300, 150, 100, qc.ProgressBar.STYLE_CIRCLE, qc.ProgressBar.SHOW_REMAINED, 0.2, true, true);
+
+        var bar1 = createProgress(180, 410, 150, 100, qc.ProgressBar.STYLE_CIRCLE, qc.ProgressBar.SHOW_PROCESSED, -1, true, true);
+        bar1.onValueChange.add(function(value) {
+            if (value === bar.minValue) {
+                bar1.reverse = !bar1.reverse;
+            }
+        });
+        var bar2 = createProgress(350, 410, 150, 100, qc.ProgressBar.STYLE_CIRCLE, qc.ProgressBar.SHOW_REMAINED, -1, true, true);
+        bar2.onValueChange.add(function(value) {
+            if (value === bar2.minValue) {
+                bar2.showMode = 1 - bar2.showMode;
+            }
+        });
+    };
+
+    function createProgress(x, y, width, height, style, showMode, fixedSize, clipSliders, indeterminable, reverse) {
+        var bar = game.add.progressBar(null, true);
+        bar.texture = game.assets.find('ui_rect_gray');
+        bar.frame = frameIndex = 0;
+        bar.borderTop = 10;
+        bar.borderLeft = 10;
+        bar.borderRight = 10;
+        bar.borderBottom = 10;
+        bar.imageType = qc.UIImage.IMAGE_TYPE_SLICED;
+        bar.style = style;
+        bar.x = x;
+        bar.y = y;
+        bar.setMinMax(100, 999);
+        bar.numberOfStep = 361;
+        bar.width = width;
+        bar.height = height;
+        bar.showMode = showMode;
+        bar.fixedSize = fixedSize;
+        bar.indeterminable = indeterminable;
+        bar.reverse = !!reverse;
+
+        bar.sliders.texture = style === qc.ProgressBar.STYLE_HORIZONTAL ? game.assets.find('firstaid') : game.assets.find('monsters');
+        bar.sliders.addScript('qc.NodeMask');
+        bar.clipSliders = clipSliders;
+        bar.sliders.borderTop = 20;
+        bar.sliders.borderLeft = 3;
+        bar.sliders.borderRight = 30;
+        bar.sliders.borderBottom = 20;
+        bar.sliders.imageType = qc.UIImage.IMAGE_TYPE_SLICED;
+        return bar;
+    };
+</script>
+
+</body>
+</html>

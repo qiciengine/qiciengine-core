@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>场景测试</title>
+        <meta charset="UTF-8">
+
+        <script src="../lib/phaser.js" type="text/javascript"></script>
+        <script src="../build/qc-core-debug.js" type="text/javascript"></script>
+    </head>
+    <body>
+    <script type="application/javascript" src="js/builtinStartGame.js"></script>
+
+    <script type="application/javascript">
+        game._onFirstScenePreload = function() {
+            console.log('主场景资源加载，这里可以放测试的资源加载');
+            //game.assets.load('a', 'assets/unkonw.bin');
+        }
+
+        game._onFirstSceneLoaded = function() {
+            console.log('主场景加载完毕了，加载main场景');
+
+            // 切换场景
+            var loadMain = function() {
+                game.state.load('main', true);
+            };
+            game.phaser.time.events.add(1000, loadMain);
+        }
+
+        // 自定义个逻辑脚本
+        var s = qc.Serializer;
+        test = qc.defineBehaviour('testGame.Test', null, null, {
+            _image : s.NODE,
+            _prefab : s.PREFAB,
+            _prefabs : s.PREFAB_ARRAY,
+            _toggle : s.NODE,
+            _buttonText : s.NODE,
+            _texture : s.TEXTURE,
+            _array : s.ARRAY,
+            _object : s.OBJECT
+        });
+        test.prototype.awake = function() {
+            if (this._image) {
+                console.log('Behaviour序列化完毕，数据如下：');
+                console.log(this._image);
+                console.log(this._prefab);
+                console.log(this._prefabs);
+                console.log(this._toggle);
+                console.log(this._buttonText);
+                console.log(this._texture);
+                console.log(this._array);
+                console.log(this._object);
+            }
+        }
+    </script>
+    </body>
+</html>

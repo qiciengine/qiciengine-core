@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>QCEngine</title>
+        <meta charset="UTF-8">
+
+        <script src="../lib/phaser.js" type="text/javascript"></script>
+        <script src="../build/qc-core-debug.js" type="text/javascript"></script>
+        <script>
+            function createText() {
+                //创建text
+                var text = new qc.UIText(game);
+
+                // 设置字体
+                text.font = "cursive";
+
+                // 设置字体颜色
+                text.color = "#ff0000";
+
+                text.text = "loop timer";
+
+                // 设置字体大小
+                text.fontSize = "250%";
+
+                // 设置粗体
+                text.bold = false;
+                return text;
+            }
+
+            function init() {
+                game = new qc.Game(800, 600, "", {
+                    preload : function() {
+                        console.log('preload call.');
+                    },
+
+                    create : function() {
+                        //创建text
+                        text = createText();
+                        score = 0;
+                        id = null;
+                    }
+                });
+            }
+        </script>
+    </head>
+    <body onload="init();">
+
+    <ul>
+        <li><a href="javascript:loopEvent()">loop定时器</a></li>
+        <li><a href="javascript:addEvent()">执行一次</a></li>
+        <li><a href="javascript:removeEvent()">移除事件</a></li>
+
+    </ul>
+    <script type="application/javascript">
+        function addEvent() {
+            game.timer.remove(id);
+            id = game.timer.add(150, function() {
+                text.text = "loop timer = " + score++;
+            }, this);
+        }
+        function loopEvent() {
+            game.timer.remove(id);
+            id = game.timer.loop(150, function() {
+                text.text = "loop timer = " + score++;
+            }, this);
+        }
+
+        function removeEvent() {
+            if (id) {
+                game.timer.remove(id);
+                id = null;
+                score = 0;
+            }
+        }
+
+    </script>
+    </body>
+</html>

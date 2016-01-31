@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>QCEngine</title>
+        <meta charset="UTF-8">
+
+        <script src="../lib/phaser.js" type="text/javascript"></script>
+        <script src="../build/qc-core-debug.js" type="text/javascript"></script>
+        <script>
+            function init() {
+                game = new qc.Game(800, 600, "", {
+                    preload : function() {
+                        console.log('preload call.');
+
+                        // 加载LOGO
+                        // 注意：也可以在游戏实际运行中调度哦，亲
+                        game.assets.load('logo', 'assets/logo.bin');
+
+                        game.assets.load('atlas', 'assets/sprites/pixi_monsters.bin',
+                                function(data) {
+                                    console.log(data);
+                                });
+                    },
+
+                    create : function() {
+                        console.log('create call.');
+                        ob = new qc.UIRoot(game);
+                        ob.addScript('Main');
+
+                    }
+                });
+            }
+
+            // 自定义逻辑脚本
+            Main = function() {
+                qc.Behaviour.call(this);
+            };
+            Main.prototype = Object.create(qc.Behaviour.prototype);
+            Main.prototype.constructor = Main;
+            Main.prototype.update = function() {
+                // console.log('逻辑脚本的帧调度:' + this.gameObject.rotation);
+                this.gameObject.rotation = (this.gameObject.rotation + 1) % 360;
+            }
+            Main.prototype.meta = function() {
+                return [
+                    [ "speed", "float" ],
+                    [ "hero", "string" ]
+                ];
+            }
+        </script>
+    </head>
+    <body onload="init();">
+
+    <ul>
+        <li><a href="javascript:testTree()">取得树节点</a></li>
+
+        <li><a href="javascript:testScripts()">UIRoot挂载的逻辑脚本</a></li>
+    </ul>
+    <script type="application/javascript">
+        function testTree() {
+            console.log(game.world.children);
+        }
+        function testScripts() {
+            console.log(ob.scripts);
+        }
+    </script>
+    </body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "ver": 1,
+  "uuid": "__builtin_resource__",
+  "padding":{
+        "button.png":[10,10,10,10]
+    }
+}

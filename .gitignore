@@ -1,0 +1,6 @@
+.idea
+node_modules
+qc-core-debug.js
+InspectorTips.js
+qc-core.js
+nohup.out

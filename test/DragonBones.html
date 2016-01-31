@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QCEngine</title>
+    <meta charset="UTF-8">
+
+    <script src="../lib/phaser.js" type="text/javascript"></script>
+    <script src="../build/qc-core-debug.js" type="text/javascript"></script>
+    <script>
+        function init() {
+            allConf = {
+                'daozei' : {
+                    'url' : 'assets/dragonbones/daozei.bin',
+                    'x' : 80,
+                    'y' : 120
+                }/*,
+                'ermo' : {
+                    'url' : 'assets/dragonbones/ermoshilaimu.bin',
+                    'x' : 200,
+                    'y' : 80
+                },
+                'siwang' : {
+                    'url' : 'assets/dragonbones/siwangqishishilaimu.bin',
+                    'x' : 320,
+                    'y' : 160
+                },
+                'yinyou' : {
+                    'skeleton' : 'assets/dragonbones/yinyou.bin',
+                    'x' : 640,
+                    'y' : 80
+                }*/
+            };
+            game = new qc.Game(1000, 500, "", {
+                preload : function() {
+                    for (var key in allConf) {
+                        game.assets.load(key, allConf[key].url);
+                    }
+                },
+
+                create : function() {
+                    allAni = [];
+                    for (var name in allConf) {
+                        conf = allConf[name];
+                        ob = new qc.Sprite(game);
+                        ob.texture = game.assets.find(name);
+                        ob.x = conf.x;
+                        ob.y = conf.y;
+                        ob.scaleX = 2;
+                        ob.scaleY = 2;
+                        ob.name = name;
+                        allAni.push(ob);
+                    }
+                },
+
+                update : function() {
+                    allAni.forEach(function(ob) {
+                        var list = ob.animationNameList;
+                        if (!list)
+                            return;
+
+                        if (!ob.countFrame) {
+                            ob.countFrame = 1;
+                            ob.playAnimation(list[parseInt(Math.random() * list.length)]);
+                        }
+                        else {
+                            ob.countFrame++;
+                            if (ob.countFrame % 100 == 0)
+                                ob.playAnimation(list[parseInt(Math.random() * list.length)]);
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+</head>
+<body onload="init();">
+</body>
+</html>

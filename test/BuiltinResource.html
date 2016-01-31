@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>内置资源</title>
+    <meta charset="UTF-8">
+
+    <style type="text/css">
+        div { padding: 10px; font-size: 1.5em; }
+    </style>
+
+    <script src="../lib/phaser.js" type="text/javascript"></script>
+    <script src="../build/qc-core-debug.js" type="text/javascript"></script>
+</head>
+<body>
+<script type="application/javascript" src="js/builtinStartGame.js"></script>
+
+<script>
+    var Assets = qc.Assets;
+    game._onFirstScenePreload = function() {
+    }
+
+    game._onFirstSceneLoaded = function() {
+        imageNormal = game.add.image();
+        imageNormal.texture = game.assets.find('__builtin_resource__');
+        imageNormal.frame = 'button.png';
+        imageNormal.width = 400;
+        imageNormal.height = 400;
+        imageNormal.imageType = qc.UIImage.IMAGE_TYPE_SLICED;
+    }
+</script>
+</body>
+</html>

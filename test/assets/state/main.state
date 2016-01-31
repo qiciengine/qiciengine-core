@@ -1,0 +1,331 @@
+{
+  "data": {
+    "class": "qc.Node",
+    "data": {
+      "uuid": "1647a9f7-7992-45d8-b558-34f898293ba1",
+      "_prefab": [
+        2,
+        ""
+      ],
+      "name": [
+        2,
+        "world"
+      ],
+      "alpha": [
+        1,
+        1
+      ],
+      "visible": [
+        12,
+        true
+      ],
+      "renderable": [
+        12,
+        false
+      ],
+      "children": [
+        {
+          "class": "qc.UIRoot",
+          "data": {
+            "uuid": "16a9ec50-5260-4063-b38a-bd067d4b2941",
+            "_prefab": [
+              2,
+              ""
+            ],
+            "name": [
+              2,
+              "UIRoot"
+            ],
+            "alpha": [
+              1,
+              1
+            ],
+            "visible": [
+              12,
+              true
+            ],
+            "renderable": [
+              12,
+              false
+            ],
+            "children": [
+              {
+                "class": "qc.UIImage",
+                "data": {
+                  "uuid": "809b47bb-bdda-4ee0-9979-d5ae0aa8a165",
+                  "_prefab": [
+                    2,
+                    ""
+                  ],
+                  "name": [
+                    2,
+                    "UIImage"
+                  ],
+                  "alpha": [
+                    1,
+                    1
+                  ],
+                  "visible": [
+                    12,
+                    true
+                  ],
+                  "renderable": [
+                    12,
+                    true
+                  ],
+                  "children": [],
+                  "colorTint": [
+                    1,
+                    16777215
+                  ],
+                  "scripts": [],
+                  "x": [
+                    1,
+                    0
+                  ],
+                  "y": [
+                    1,
+                    0
+                  ],
+                  "anchor": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "anchoredX": [
+                    1,
+                    0
+                  ],
+                  "anchoredY": [
+                    1,
+                    0
+                  ],
+                  "scaleX": [
+                    1,
+                    1
+                  ],
+                  "scaleY": [
+                    1,
+                    1
+                  ],
+                  "pivotX": [
+                    1,
+                    0
+                  ],
+                  "pivotY": [
+                    1,
+                    0
+                  ],
+                  "rotation": [
+                    1,
+                    0
+                  ],
+                  "width": [
+                    1,
+                    100
+                  ],
+                  "height": [
+                    1,
+                    100
+                  ],
+                  "left": [
+                    1,
+                    0
+                  ],
+                  "right": [
+                    1,
+                    0
+                  ],
+                  "top": [
+                    1,
+                    0
+                  ],
+                  "bottom": [
+                    1,
+                    0
+                  ],
+                  "interactive": [
+                    12,
+                    false
+                  ],
+                  "texture": [
+                    4,
+                    "__builtin_resource__",
+                    "__builtin_resource__",
+                    "__builtin_resource__"
+                  ],
+                  "frame": [
+                    2,
+                    "empty.png"
+                  ],
+                  "imageType": [
+                    1,
+                    0
+                  ]
+                }
+              }
+            ],
+            "colorTint": [
+              1,
+              null
+            ],
+            "scripts": [],
+            "x": [
+              1,
+              0
+            ],
+            "y": [
+              1,
+              0
+            ],
+            "anchor": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "anchoredX": [
+              1,
+              0
+            ],
+            "anchoredY": [
+              1,
+              0
+            ],
+            "scaleX": [
+              1,
+              1
+            ],
+            "scaleY": [
+              1,
+              1
+            ],
+            "pivotX": [
+              1,
+              0
+            ],
+            "pivotY": [
+              1,
+              0
+            ],
+            "rotation": [
+              1,
+              0
+            ],
+            "width": [
+              1,
+              522
+            ],
+            "height": [
+              1,
+              438
+            ],
+            "left": [
+              1,
+              0
+            ],
+            "right": [
+              1,
+              0
+            ],
+            "top": [
+              1,
+              0
+            ],
+            "bottom": [
+              1,
+              0
+            ],
+            "interactive": [
+              12,
+              false
+            ]
+          }
+        }
+      ],
+      "colorTint": [
+        1,
+        null
+      ],
+      "scripts": [],
+      "x": [
+        1,
+        99.16559147557383
+      ],
+      "y": [
+        1,
+        52.56318236683417
+      ],
+      "anchor": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "anchoredX": [
+        1,
+        99.16559147557383
+      ],
+      "anchoredY": [
+        1,
+        52.56318236683417
+      ],
+      "scaleX": [
+        1,
+        0.45811152199139993
+      ],
+      "scaleY": [
+        1,
+        0.45811152199139993
+      ],
+      "pivotX": [
+        1,
+        0
+      ],
+      "pivotY": [
+        1,
+        0
+      ],
+      "rotation": [
+        1,
+        0
+      ],
+      "width": [
+        1,
+        522
+      ],
+      "height": [
+        1,
+        438
+      ],
+      "left": [
+        1,
+        0
+      ],
+      "right": [
+        1,
+        0
+      ],
+      "top": [
+        1,
+        0
+      ],
+      "bottom": [
+        1,
+        0
+      ],
+      "interactive": [
+        12,
+        false
+      ]
+    },
+    "dependences": {
+      "__builtin_resource__": {
+        "key": "__builtin_resource__",
+        "url": "__builtin_resource__",
+        "uuid": "__builtin_resource__"
+      }
+    }
+  }
+}

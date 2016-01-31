@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>物理系统</title>
+    <meta charset="UTF-8">
+
+    <style type="text/css">
+        div { padding: 10px; font-size: 1.5em; }
+    </style>
+
+    <script src="../lib/phaser.js" type="text/javascript"></script>
+    <script src="../build/qc-core-debug.js" type="text/javascript"></script>
+</head>
+<body>
+<script type="application/javascript" src="js/builtinStartGame.js"></script>
+
+<script>
+    var Assets = qc.Assets;
+    game._onFirstScenePreload = function() {
+        game.assets.load('firstaid', 'assets/sprites/firstaid.bin');
+        game.assets.load('beauty', 'assets/sprites/firstaid.bin')
+        game.assets.load("arrow", 'assets/sprites/firstaid.bin')
+    }
+
+    game._onFirstSceneLoaded = function() {
+
+        // 反弹图片
+        imageBounce = game.add.image();
+        imageBounce.texture = game.assets.find('firstaid');
+        imageBouncePhysics = imageBounce.addScript('qc.PhysicsBehaviour');
+
+        // 旋转图片
+        imageRotation = game.add.image();
+        imageRotation.texture = game.assets.find('firstaid');
+        imageRotation.x = 150;
+        imageRotation.y = 200;
+        imageRotationPhysics = imageRotation.addScript('qc.PhysicsBehaviour');
+
+        imageNormal = game.add.image();
+        imageNormal.texture = game.assets.find('firstaid');
+        imageNormal.x = game.world.centerX;
+        imageNormal.y = game.world.centerY;
+        imageNormalPhysics = imageNormal.addScript('qc.PhysicsBehaviour');
+        // 设置不受其他物体碰撞的影响
+        imageNormalPhysics.immovable = true;
+
+        // 添加美女图
+        imageBeauty = game.add.image();
+        imageBeauty.texture = game.assets.find('beauty');
+        imageBeautyPhysics = imageBeauty.addScript('qc.PhysicsBehaviour');
+        imageBeauty.x = 50;
+        imageBeauty.y = 50;
+
+        // 添加箭头图标 根据光标位置旋转
+        imageArrow = game.add.image();
+        imageArrow.texture = game.assets.find('arrow');
+        imageArrow.x = 100;
+        imageArrow.y = 200;
+        imageArrow.pivotX = 0.5;
+        imageArrow.pivotY = 0.5;
+        imageArrowPhysics = imageArrow.addScript('qc.PhysicsBehaviour');
+        imageArrowPhysics.bounce.set(1);
+
+        // 动态加载图片并构造之
+        game.assets.load('monsters', 'assets/sprites/pixi_monsters.bin', function(data) {
+            imageAtlas = game.add.image();
+            imageAtlas.x = 200;
+            imageAtlas.y = 0;
+            imageAtlas.texture = game.assets.find('monsters');
+            imageAtlas.frame = frameIndex = 0;
+            imageAtlasPhysics = imageAtlas.addScript('qc.PhysicsBehaviour');
+            // 移动到指定的x/y坐标
+            imageAtlasPhysics.moveToXY(imageNormal.x, imageNormal.y, 200);
+            // 设置反弹力
+            imageAtlasPhysics.bounce.set(3,3);
+            // 设置与imageNormal 可以发生碰撞
+            imageAtlasPhysics.collideMonitor(imageNormal, function() {
+                console.log("发生碰撞");
+                // 设置拖拽力
+                imageAtlasPhysics.drag.set(300);
+            });
+        });
+
+        // 创建物理系统
+        game.physics.createPhysics();
+    }
+
+</script>
+
+
+<ul>
+    <li><a href="javascript:accelerateToXY()">加速度移动到指定坐标</a></li>
+    <li><a href="javascript:Velocity()">赋予速度</a></li>
+    <li><a href="javascript:Rotation()">加速度旋转</a></li>
+    <li><a href="javascript:Gravity()">设置重力</a></li>
+    <li><a href="javascript:Collide()">更改碰撞面积</a></li>
+
+</ul>
+<script type="application/javascript">
+    function accelerateToXY() {
+        imageBeauty.x = 0;
+        imageBeauty.y = 0;
+        imageBeautyPhysics.velocity.x = 0;
+        imageBeautyPhysics.velocity.y = 0;
+        imageBeautyPhysics.accelerateToXY(40, 100);
+    }
+    function Velocity() {
+        imageArrowPhysics.velocity.set(200);
+    }
+    function Rotation() {
+        imageRotationPhysics.angularAcceleration = 30;
+    }
+    function Gravity() {
+        // 设置重力
+        imageBouncePhysics.gravity.set(0, 190);
+    }
+    function Collide() {
+        imageAtlas.x = 200;
+        imageAtlas.y = 0;
+
+        // 将速度清空
+        imageAtlasPhysics.velocity.x = 0;
+        imageAtlasPhysics.velocity.y = 0;
+
+        // 设置物理系统的高度
+        imageAtlasPhysics.height = 10;
+
+        // 移动到指定的x/y坐标
+        imageAtlasPhysics.moveToXY(imageNormal.x, imageNormal.y, 200);
+        // 设置拖拽力
+        imageAtlasPhysics.drag.set(0);
+    }
+
+</script>
+</body>
+</html>

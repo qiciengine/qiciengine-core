@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>输入框组件</title>
+    <meta charset="UTF-8">
+
+    <style type="text/css">
+        div { padding: 10px; font-size: 1.5em; }
+    </style>
+
+    <script src="../lib/phaser.js" type="text/javascript"></script>
+    <script src="../build/qc-core-debug.js" type="text/javascript"></script>
+</head>
+<body>
+
+<script type="application/javascript" src="js/builtinStartGame.js"></script>
+
+<script type="application/javascript">
+
+    game._onFirstSceneLoaded = function() {
+        textField = game.add.inputField();
+        textField.text = '普通输入框';
+        textField.color = new qc.Color(0xff0000);
+
+        textField1 = game.add.inputField();
+        textField1.contentType = qc.InputField.PASSWORD;
+        textField1.text = '密码输入框';
+        textField1.y = 50;
+
+        textField2 = game.add.inputField();
+        textField2.text = '123456框';
+        textField2.contentType = qc.InputField.NUMBER;
+        textField2.y = 100;
+        textField2.textComponent.fontSize = 55;
+        textField2.height = 70;
+        textField2.width = 200;
+        textField2.characterLimit = 3;
+
+        textField3 = game.add.inputField();
+        textField3.text = 'name我';
+        textField3.contentType = qc.InputField.NAME;
+        textField3.y = 150;
+
+        textField4 = game.add.inputField();
+        textField4.text = '多行编辑框';
+        textField4.lineType = qc.InputField.MULTI_LINE;
+        textField4.y = 200;
+
+        textField5 = game.add.inputField();
+        textField5.text = 'EMAIL我';
+        textField5.contentType = qc.InputField.EMAIL;
+        textField5.y = 300;
+    }
+
+</script>
+
+</body>
+</html>

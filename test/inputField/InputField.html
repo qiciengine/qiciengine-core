@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>文本组件</title>
+    <meta charset="UTF-8">
+
+    <style type="text/css">
+        div { padding: 10px; font-size: 1.5em; }
+    </style>
+
+    <style type="text/css" media="screen, print">
+        @font-face {
+            font-family: "Automania";
+            src: url("../assets/font/华康海报体.ttf");
+        }
+    </style>
+
+    <script src="../../lib/phaser.js" type="text/javascript"></script>
+    <script src="../../build/qc-core-debug.js" type="text/javascript"></script>
+    <script src="../../lib/qc-widget.js" type="text/javascript"></script>
+    <script src="../GameView.js" type="text/javascript"></script>
+    <script src="GameData.js" type="text/javascript"></script>
+    <script src="../GameTree.js" type="text/javascript"></script>
+    <script src="GameTable.js" type="text/javascript"></script>
+
+    <script>
+        function init() {
+            game = new qc.Game(800, 600, "", {
+                init: function() {
+                    world = game.world;
+                    tree = new GameTree(game);
+                    table = new GameTable(tree.dataModel);
+                    gameView = new GameView(game);
+
+                    var button = new qc.widget.Button();
+                    button.on('click', function() {
+                        sound.play();
+                    });
+
+                    toolbar = new qc.widget.Toolbar();
+                    toolbar.setItems([button]);
+
+                    container = new qc.widget.Container();
+                    container.layout = new qc.widget.layout.BorderLayout(container);
+                    container.setItems([
+                        {
+                            region: 'top',
+                            element: toolbar
+                        },
+                        {
+                            region: 'left',
+                            element: tree,
+                            width: 200
+                        },
+                        {
+                            region: 'center',
+                            element: gameView
+                        },
+                        {
+                            region: 'right',
+                            element: table,
+                            width: 20
+                        }
+                    ]);
+                    container.addToDOM();
+                },
+                create: function() {
+                    inputField = game.add.inputField();
+                    inputField.texture = game.assets.find('__builtin_resource__');
+                    inputField.frame = 'button.png';
+                    inputField.imageType = qc.UIImage.IMAGE_TYPE_SLICED;
+
+                    inputField.placeholder.text = '这是输入提示语';
+                    inputField.x = 50;
+                    inputField.y = 50;
+
+                    tree.expandAll();
+                },
+                update: function() {
+                    table.iv();
+                }
+            });
+        }
+    </script>
+
+</head>
+<body onload="init();">
+
+</body>
+</html>
+

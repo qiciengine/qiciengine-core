@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>anchors自适应分辨率排版</title>
+    <meta charset="UTF-8">
+
+    <style type="text/css">
+        div { padding: 10px; font-size: 1.5em; }
+    </style>
+
+    <script src="../lib/phaser.js" type="text/javascript"></script>
+    <script src="../build/qc-core-debug.js" type="text/javascript"></script>
+</head>
+<body>
+<script type="application/javascript" src="js/builtinStartGame.js"></script>
+
+<script>
+    game._onFirstScenePreload = function() {
+        game.assets.load('logo', 'assets/logo.bin');
+        game.assets.load('test', 'assets/sprites/firstaid.bin');
+    }
+
+    game._onFirstSceneLoaded = function() {
+        // 扔在中心点
+        image = game.add.image();
+        image.texture = game.assets.find('logo');
+        image.resetNativeSize();
+        image.setAnchor(new qc.Point(0, 0), new qc.Point(0, 0));
+
+        // 放在左上角
+        image1 = game.add.image(image);
+        image1.texture = game.assets.find('test');
+        image1.resetNativeSize();
+        image1.pivotX = 0;
+        image1.pivotY = 0;
+        image.setAnchor(new qc.Point(0, 0), new qc.Point(0, 0));
+        image1.anchoredX = 0;
+        image1.anchoredY = 0;
+
+        // 放在右下角
+        image2 = game.add.image(image);
+        image2.texture = game.assets.find('test');
+        image2.resetNativeSize();
+        image2.pivotX = 1;
+        image2.pivotY = 1;
+        image2.setAnchor(new qc.Point(1, 1), new qc.Point(1, 1));
+        image2.anchoredX = 0;
+        image2.anchoredY = 0;
+
+        // 左下角放一个填满区域的
+        image3 = game.add.image(image);
+        image3.texture = game.assets.find('test');
+        image3.resetNativeSize();
+        image3.setAnchor(new qc.Point(0, 0.5), new qc.Point(0.5, 1));
+        image3.left = 0;
+        image3.right = 0;
+        image3.top = 0;
+        image3.bottom = 0;
+    }
+</script>
+</body>
+</html>

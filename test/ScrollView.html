@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ScrollView测试</title>
+    <meta charset="UTF-8">
+
+    <style type="text/css">
+        div { padding: 10px; font-size: 1.5em; }
+    </style>
+
+    <script src="../lib/phaser.js" type="text/javascript"></script>
+    <script src="../build/qc-core-debug.js" type="text/javascript"></script>
+</head>
+<body style="margin: 0px 0px 0px 0px;">
+<input id="temp_input" type="email" name="email" oninput="oninput"/>
+<script type="application/javascript" src="js/builtinStartGame.js"></script>
+
+<script>
+    document.getElementById('temp_input').addEventListener('input', onInput);
+    function onInput(a){
+        console.log(a);
+    };
+    var Assets = qc.Assets;
+    parentNode = null;
+    subNode = null;
+    game._onFirstScenePreload = function() {
+        game.assets.load('firstaid', 'assets/sprites/firstaid.bin');
+        game.assets.load('monsters', 'assets/sprites/pixi_monsters.bin');
+        game.assets.load('ui_rect_gray', 'assets/sprites/ui_rect_gray.bin');
+        game.assets.load('ui_rect_white', 'assets/sprites/ui_rect_white.bin');
+    };
+
+    game._onFirstSceneLoaded = function() {
+        hscrollbar = game.add.scrollBar(null, true);
+        hscrollbar.texture = game.assets.find('ui_rect_gray');
+        hscrollbar.frame = frameIndex = 0;
+        hscrollbar.borderTop = 10;
+        hscrollbar.borderLeft = 10;
+        hscrollbar.borderRight = 10;
+        hscrollbar.borderBottom = 10;
+        hscrollbar.imageType = qc.UIImage.IMAGE_TYPE_SLICED;
+        hscrollbar.x = 30;
+        hscrollbar.y = 10;
+        hscrollbar.width = 400;
+        hscrollbar.height = 20;
+
+        hscrollbar.sliders.texture = game.assets.find('ui_rect_white');
+        hscrollbar.sliders.borderTop = 10;
+        hscrollbar.sliders.borderLeft = 10;
+        hscrollbar.sliders.borderRight = 10;
+        hscrollbar.sliders.borderBottom = 10;
+        hscrollbar.sliders.imageType = qc.UIImage.IMAGE_TYPE_SLICED;
+        hscrollbar.onDown.add(function(v){
+            hscrollbar.sliders.colorTint = new qc.Color(0xFFFF00);
+        }, hscrollbar);
+        hscrollbar.onUp.add(function(v){
+            hscrollbar.sliders.colorTint = new qc.Color(0xFFFFFF);
+        }, hscrollbar);
+        vscrollbar = game.add.scrollBar(null, true);
+        vscrollbar.texture = game.assets.find('ui_rect_gray');
+        vscrollbar.frame = frameIndex = 0;
+        vscrollbar.borderTop = 10;
+        vscrollbar.borderLeft = 10;
+        vscrollbar.borderRight = 10;
+        vscrollbar.borderBottom = 10;
+        vscrollbar.imageType = qc.UIImage.IMAGE_TYPE_SLICED;
+        vscrollbar.x = 10;
+        vscrollbar.y = 30;
+        vscrollbar.direction = qc.ScrollBar.TOP_TO_BOTTOM;
+        vscrollbar.width = 20;
+        vscrollbar.height = 400;
+
+        vscrollbar.sliders.texture = game.assets.find('ui_rect_white');
+        vscrollbar.sliders.borderTop = 10;
+        vscrollbar.sliders.borderLeft = 10;
+        vscrollbar.sliders.borderRight = 10;
+        vscrollbar.sliders.borderBottom = 10;
+        vscrollbar.sliders.imageType = qc.UIImage.IMAGE_TYPE_SLICED;
+
+        vscrollbar.onEnter.add(function(v){
+            vscrollbar.sliders.colorTint = new qc.Color(0xFFFF00);
+        }, vscrollbar);
+        vscrollbar.onExit.add(function(v){
+            vscrollbar.sliders.colorTint = new qc.Color(0xFFFFFF);
+        }, vscrollbar);
+
+        scrollViewParent = game.add.scrollView();
+        scrollViewParent.texture = game.assets.find('ui_rect_white');
+        scrollViewParent.imageType = qc.UIImage.IMAGE_TYPE_SLICED;
+        scrollViewParent.borderTop = 10;
+        scrollViewParent.borderLeft = 10;
+        scrollViewParent.borderRight = 10;
+        scrollViewParent.borderBottom = 10;
+        scrollViewParent.x = 30;
+        scrollViewParent.y = 30;
+        scrollViewParent.width = 400;
+        scrollViewParent.height = 400;
+        scrollViewParent.canVertical = true;
+        scrollViewParent.canHorizontal = true;
+        scrollViewParent.interactive = true;
+        scrollViewParent.clipContent = true;
+        scrollViewParent.movementType = qc.ScrollView.MOVEMENT_ELASTIC;
+        scrollViewParent.elasticity = 2;
+        contentParent = game.add.node(scrollViewParent);
+        contentParent.width = 1000;
+        contentParent.height = 1000;
+        scrollViewParent.content = contentParent;
+
+        showImageParent = game.add.image(contentParent);
+        showImageParent.texture = game.assets.find('monsters');
+        showImageParent.frame = 1;
+        showImageParent.width = 200;
+        showImageParent.height = 200;
+        showImageParent.x = 0;
+        showImageParent.y = 0;
+
+        scrollView = game.add.scrollView(contentParent);
+        scrollView.texture = game.assets.find('ui_rect_white');
+        scrollView.imageType = qc.UIImage.IMAGE_TYPE_SLICED;
+        scrollView.borderTop = 10;
+        scrollView.borderLeft = 10;
+        scrollView.borderRight = 10;
+        scrollView.borderBottom = 10;
+        scrollView.x = 0;
+        scrollView.y = 300;
+        scrollView.width = 400;
+        scrollView.height = 400;
+        scrollView.canVertical = true;
+        scrollView.canHorizontal = true;
+        scrollView.interactive = true;
+        scrollView.clipContent = true;
+        scrollView.movementType = qc.ScrollView.MOVEMENT_CLAMPED;
+        scrollView.verticalScrollBar = vscrollbar;
+        scrollView.horizontalScrollBar = hscrollbar;
+        scrollView.elasticity = 2;
+        scrollView.propagationScroll = true;
+        mask = scrollView.addScript("qc.NodeMask");
+        mask.checkInField = false;
+
+        content = game.add.node(scrollView);
+        content.width = 1000;
+        content.height = 1000;
+
+//        v = content.addScript('qc.TableLayout');
+//        v.style = qc.TableLayout.STYLE_RESIZE_ELEMENT;
+//        v.startCorner = qc.TableLayout.CORNER_BOTTOM_RIGHT;
+//        v.autoUpdate = true;
+//        v.contentSizeProvider = qc.TableLayout.USE_BOUNDS;
+//        v.constraint = qc.TableLayout.CONSTRAINT_FLEXIBLE;
+//        //v.constraint = qc.TableLayout.CONSTRAINT_FIX_COLUMN_COUNT;
+//        v.stride = 20;
+//        //v.setCellStyle(null,null,qc.TableLayout.ALIGN_MIDDLE_CENTER,null,null,null,null, 50, 50);
+//        v.setCellStyle(null,null,qc.TableLayout.ALIGN_MIDDLE_CENTER,null,null,null,null);
+//        v.sizeProvider = qc.Bounds.USE_BOUNDS;
+//        v.deep = 1;‰
+//        v.setPadding(20, 20, 20, 20);
+
+        hbar = content.addScript('qc.VerticalLayout');
+        hbar.sizeProvider = qc.Bounds.USE_RECTTRANSFORM;
+        hbar.autoUpdate = true;
+        scrollView.content = content;
+
+        showImage = game.add.image(content);
+        showImage.texture = game.assets.find('monsters');
+        showImage.frame = 1;
+        showImage.width = 400;
+        showImage.height = 500;
+
+        showText = game.add.text(content);
+        showText.text = '测试这段话1\n测试这段话2\n测试这段话3\n测试这段话4\n测试这段话5\n测试这段话6\n测试这段话7\n';
+        showText.x = 0;
+        showText.y = 0;
+        showText.visible = false;
+
+        for (var j = 0; j < 2; j++) {
+            for (var i = 0; i < 2; i++) {
+                var sub = game.add.image(content);
+//                var el = sub.addScript('qc.LayoutElement');
+//                el.minWidth = 50;
+//                el.minHeight = 50;
+                sub.texture = game.assets.find(i%2 === 0 ? 'monsters' : 'firstaid');
+                sub.width = 40;
+                sub.height = 40;
+                sub.x = j * 10;
+                sub.y = i * 30;
+//                sub.rotation = Math.PI / 4;
+            }
+        }
+    };
+</script>
+
+</body>
+</html>

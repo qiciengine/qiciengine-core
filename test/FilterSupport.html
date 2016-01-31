@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UIImange组件</title>
+    <meta charset="UTF-8">
+
+    <style type="text/css">
+        div { padding: 10px; font-size: 1.5em; }
+    </style>
+
+    <script src="../lib/phaser.js" type="text/javascript"></script>
+    <script src="../build/qc-core-debug.js" type="text/javascript"></script>
+</head>
+<body>
+<script type="application/javascript" src="js/builtinStartGame.js"></script>
+
+<script>
+    var Assets = qc.Assets;
+    game._onFirstScenePreload = function() {
+        game.assets.load('monsters', 'assets/sprites/pixi_monsters.bin');
+        game.assets.load('firstaid', 'assets/sprites/firstaid.bin');
+    }
+
+    game._onFirstSceneLoaded = function() {
+
+        imageNormal2 = game.add.image();
+        imageNormal2.texture = game.assets.find('monsters');
+        imageNormal2.frame = 1;
+        imageNormal2.x = -150;
+        imageNormal2.y = -150;
+        imageNormal2.width = 1000;
+        imageNormal2.height = 1000;
+
+        imageNormal1 = game.add.image();
+        imageNormal1.texture = game.assets.find('monsters');
+        imageNormal1.frame = 0;
+        imageNormal1.x = 300;
+        imageNormal1.y = 300;
+        imageNormal1.resetNativeSize();
+
+        imageNormal = game.add.image();
+        imageNormal.texture = game.assets.find('monsters');
+        imageNormal.frame = 0;
+        imageNormal.x = 100;
+        imageNormal.y = 100;
+        imageNormal.resetNativeSize();
+
+        otherTexture = new qc.Filter.FilterTexture(game);
+        otherTexture.texture = game.assets.find('monsters');
+        otherTexture.frame = 1;
+
+        otherTexture1 = new qc.Filter.FilterTexture(game);
+        otherTexture1.texture = game.assets.find('monsters');
+        otherTexture1.frame = 2;
+
+        filterSupport = imageNormal.addScript('qc.FilterGroup');
+        filter = filterSupport.addFilter('qc.Filter.BlendTexture');
+        filter.otherTexture =  otherTexture;
+        filter.mixing = 1;
+
+        filter1 = filterSupport.addFilter('qc.Filter.BlendTexture');
+        filter1.otherTexture =  otherTexture1;
+        filter1.mixing = 0.2;
+
+    }
+</script>
+</body>
+</html>

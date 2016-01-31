@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>文本组件</title>
+    <meta charset="UTF-8">
+
+    <style type="text/css">
+        div { padding: 10px; font-size: 1.5em; }
+    </style>
+
+    <script src="../../lib/phaser.js" type="text/javascript"></script>
+    <script src="../../build/qc-core-debug.js" type="text/javascript"></script>
+    <script src="../../lib/qc-widget.js" type="text/javascript"></script>
+    <script src="../GameView.js" type="text/javascript"></script>
+    <script src="GameData.js" type="text/javascript"></script>
+    <script src="../GameTree.js" type="text/javascript"></script>
+    <script src="GameTable.js" type="text/javascript"></script>
+
+    <script>
+        function creatText() {
+            var text = game.add.text();
+            text.font = 'cursive';
+            var ttt = text.font;
+            text.fontSize = 50;
+            text.wordWrapWidth = 40;
+            return text;
+        }
+        var time = 0;
+        function init() {
+            game = new qc.Game(800, 600, "", {
+                init: function() {
+                    world = game.world;
+                    tree = new GameTree(game);
+                    table = new GameTable(tree.dataModel);
+                    gameView = new GameView(game);
+
+                    var button = new qc.widget.Button();
+                    button.on('click', function() {
+                        sound.play();
+                    });
+
+                    toolbar = new qc.widget.Toolbar();
+                    toolbar.setItems([button]);
+
+                    container = new qc.widget.Container();
+                    container.layout = new qc.widget.layout.BorderLayout(container);
+                    container.setItems([
+                        {
+                            region: 'top',
+                            element: toolbar
+                        },
+                        {
+                            region: 'left',
+                            element: tree,
+                            width: 200
+                        },
+                        {
+                            region: 'center',
+                            element: gameView
+                        },
+                        {
+                            region: 'right',
+                            element: table,
+                            width: 20
+                        }
+                    ]);
+                    container.addToDOM();
+                },
+                preload: function() {
+                    game.assets.load('defaultFont', '../assets/bitmapFonts/desyrel.bin');
+                    game.assets.load('fz', '../assets/font/fz.ttf.bin');
+                },
+                create: function() {
+                    // 三像素描边 + 外发光
+                    text = creatText();
+                    text.y = 215;
+                    text.color = new qc.Color([255,255,0, 1]);
+                    text.text = 'abc魏树木';
+                    text.overflow = true;
+                    text.strokeThickness = 2;
+                    text.stroke = new qc.Color(0xFF0000);
+
+                    tree.expandAll();
+
+                    },
+
+
+                update: function() {
+                    time ++;
+                    table.iv();
+                }
+            });
+        }
+    </script>
+
+</head>
+<body onload="init();">
+
+</body>
+</html>

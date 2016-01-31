@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html style="position:relative; margin:0px; width: 100%; height: 100%">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>File Watch</title>
+    <script src="../node_modules/socket.io/node_modules/socket.io-client/socket.io.js"></script>
+    <script type="text/javascript">
+        function connect() {
+            // 连接目标服务器
+            socket = io.connect('http://127.0.0.1:8001');
+
+            // 处理 4 种事件：
+            // 1. core 目录任何文件发生变更
+            // 2. 递归遍历目录的结果返回
+            // 3. 单层遍历目录的结果返回
+            // 4. 获取文件数据返回
+            socket.on('fileChanged', function(data) {
+                console.log('fileChanged : ', data);
+            });
+
+            socket.on('explore', function(data) {
+                console.log('explore : ', data);
+            });
+
+            socket.on('list', function(data) {
+                console.log('list : ', data);
+            });
+
+            socket.on('source', function(data) {
+                console.log('source : ', data);
+            });
+        }
+
+        // 按钮点击后模拟去：
+        // 1. 递归获取目录文件
+        // 2. 单层获取目录文件
+        // 3. 获取目标文件数据
+        function explore(url) {
+            socket.emit('explore', url);
+        }
+        function list(url) {
+            socket.emit('list', url);
+        }
+        function source(url) {
+            socket.emit('source', url);
+        }
+
+    </script>
+</head>
+<body onload="connect()">
+        在 Terminal 中运行 node test/FileWatch.js。<br><br>
+        使用 <a href="http://127.0.0.1:8001" target="_blank">127.0.0.1:8001</a> 测试是否服务开启。<br>
+        使用 <a href="http://127.0.0.1:8001/test/assets/splash.png" target="_blank">
+            127.0.0.1:8001/test/assets/splash.png</a> 直接下载图片。<br><br>
+
+        请在console中查看结果。
+
+        <li><a href="javascript:explore('src')">取得src目录（递归）</a></li>
+        <li><a href="javascript:list('src')">取得src目录（非）</a></li>
+        <li><a href="javascript:source('test/FileWatch.html')">读取test/FileWatch.html</a></li>
+</body>
+</html>
