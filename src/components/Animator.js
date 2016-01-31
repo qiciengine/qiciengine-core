@@ -86,17 +86,6 @@ Animator.prototype.update = function() {
         if (!animator || !animator.isRunning)
             continue;
 
-        // 脚本调度
-        var scripts = animator.scripts;
-        var j = scripts.length;
-        while (j--) {
-            var script = scripts[j];
-            if (!script || !script._enable || !script.update) continue;
-
-            // 调度之
-            script.update();
-        }
-
         // 更新 action
         animator.update();
     }

@@ -98,6 +98,33 @@ CurveProp.prototype.setData = function(attrib, data) {
         prop.to = data.to;
 }
 
+// 取得曲线的最大关键帧的数值
+CurveProp.prototype.getMaxValue = function(attrib) {
+    var prop = this.propMap[attrib];
+    if (!prop)
+    {
+        this.action.game.log.important('CurveProp not find attrib({0}) in getMaxValue.', attrib);
+        return;
+    }
+
+    var maxValue = false;
+    for (var i = 0; i < prop.curve._keys.length; i++)
+    {
+        if (maxValue === false)
+            maxValue = prop.curve._keys[i].value;
+        else if (maxValue < prop.curve._keys[i].value)
+            maxValue = prop.curve._keys[i].value;
+    }
+
+    if (prop.curveType === qc.CURVE_TYPE_ABSOLUTE)
+        return maxValue;
+    else if (prop.curveType === qc.CURVE_TYPE_RELATIVE)
+        return prop.from + maxValue;
+    else if (prop.curveType === qc.CURVE_TYPE_TWEEN_ABSOLUTE)
+        return prop.from + maxValue * (prop.to - prop.from);
+    else if (prop.curveType === qc.CURVE_TYPE_TWEEN_RELATIVE)
+        return prop.from + maxValue * prop.to;
+}
 
 // 取得曲线的 from 初始值
 CurveProp.prototype.getFromValue = function(target, attrib, time) {
