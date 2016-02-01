@@ -61,6 +61,8 @@ Object.defineProperties(Animator.prototype, {
                     this.animatorList[i].targetObject = this.gameObject;
 
                 var name = this.animatorList[i].name;
+                if (this.animatorMap[name])
+                    this.gameObject.game.log.error('Exist duplicate action\'s name: {0}', name);
                 this.animatorMap[name] = this.animatorList[i];
             }
         }
@@ -74,7 +76,8 @@ Animator.prototype.awake = function() {
         return;
 
     for (var i = 0; i < this.animatorList.length; i++)
-        this.animatorList[i].awake();
+        if (this.animatorList[i])
+            this.animatorList[i].awake();
 };
 
 // 帧调度

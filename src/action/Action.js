@@ -382,7 +382,7 @@ Action.prototype.update = function(deltaTime, isBegin, inEditor, forceUpdate) {
         // 刚刚开始，则间隔时间为0
         deltaTime = 0;
 
-    var preElapsedTime = this.elapsedFrame;
+    var preElapsedTime = isBegin ? -1 : this.elapsedFrame;
     this.elapsedFrame += deltaTime / 1000 * this.samples;
 
     //console.log('Action frame update:', this.elapsedFrame);
