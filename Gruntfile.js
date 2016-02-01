@@ -6,7 +6,7 @@ module.exports = function (grunt) {
 
     grunt.loadTasks('tasks');
 
-    grunt.registerTask('default', ['clean', 'concat', 'extract']);
+    grunt.registerTask('default', ['clean', 'concat']);
     grunt.registerTask('min', ['default', 'uglify']);
 };
 
