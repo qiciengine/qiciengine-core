@@ -63,10 +63,6 @@ var Action = qc.Action = function(game, id) {
 
     // 是否解包完成
     self.unpackDone = false;
-
-    // 所有挂载的脚本
-    self.scripts = [];
-    self.scriptMap = {};
 };
 Action.prototype.constructor = Action;
 
@@ -103,39 +99,6 @@ Action.prototype.awake = function() {
         this.targetObject = this.game.nodePool.find(this.targetObject);
     else if(typeof(this.targetObject) === 'object')
         this.refreshActionList();
-
-    // 所有的脚本派发awake事件
-    for (var s in this.scripts) {
-        var script = this.scripts[s];
-
-        if (script.awake)
-            script.awake.call(script);
-    }
-};
-
-// 引用 qc.Node 的 script 脚本机制
-Action.prototype.removeScript = qc.Node.prototype.removeScript;
-Action.prototype.getScript = qc.Node.prototype.getScript;
-Action.prototype._packScripts = qc.Node.prototype._packScripts;
-Action.prototype._unpackScripts = qc.Node.prototype._unpackScripts;
-
-Action.prototype.addScript = function(script, dispatchAwake) {
-    var c = qc.Node.prototype.addScript.call(this, script, dispatchAwake);
-
-    // 判断是否脚本有 Serializer.NODE 类型，不允许有该类型
-    var meta = {};
-    if (c.getMeta)
-        meta = c.getMeta();
-    for (var k in meta) {
-        if (meta[k] === qc.Serializer.NODE)
-        {
-            var str = 'Action\'s script is not allowed to set Serializer.NODE variable';
-            console.error(str);
-            qc.Util.popupError(str);
-        }
-    }
-
-    return c;
 };
 
 // 析构
@@ -143,14 +106,6 @@ Action.prototype.destroy = function() {
     var self = this;
 
     self.targetObject = null;
-
-    // 通知所有挂载的脚本移除
-    var i = self.scripts.length;
-    while (i--) {
-        self.scripts[i].destroy();
-    }
-    self.scripts = [];
-    self.scriptMap = {};
 
     // 移除所有 action
     for (var key in self.propertyList)
@@ -461,7 +416,15 @@ Action.prototype.update = function(deltaTime, isBegin, inEditor, forceUpdate) {
                         var script = this.targetObject.scripts[j];
                         if (script[this.eventList[i][1]])
                         {
-                            var ret = script[this.eventList[i][1]](this.eventList[i][2]);
+                            var para = this.eventList[i][2];
+                            if (!Array.isArray(para))
+                            {
+                                if (typeof(para) === 'string')
+                                    para = [para];
+                                else
+                                    para = [];
+                            }
+                            var ret = script[this.eventList[i][1]].apply(script, para);
                             if (ret)
                                 return ret;
                         }
@@ -493,17 +456,6 @@ Action.prototype._update = function(delay, loop, isBegin) {
     this.lastTime = this.lastTime || this.game.time.scaledTime;
     var deltaTime = this.game.time.scaledTime - this.lastTime;
     this.lastTime = this.game.time.scaledTime;
-
-    // 脚本调度
-    var scripts = this.scripts;
-    var i = scripts.length;
-    while (i--) {
-        var script = scripts[i];
-        if (!script || !script._enable || !script.update) continue;
-
-        // 调度之
-        script.update();
-    }
 
     if (this.update(deltaTime, isBegin) === qc.FinishTrigger)
     {
@@ -568,10 +520,6 @@ Action.buildBundle = function(ob) {
     if (ob.name)
         content.name = ob.name;
 
-    // 打包 scripts
-    content.scripts = ob._packScripts(content);
-    content.__json = ob.__json;
-
     // 打包 propertyList
     var propertyList = {};
     for (var key in ob.propertyList)
@@ -606,10 +554,6 @@ Action.restoreBundle = function(asset, game, inEditor) {
 
     if (json.__json)
         action.__json = json.__json;
-
-    // 还原 scripts
-    action._unpackScripts(json.scripts);
-    delete action.__json;
 
     // 还原 properties
     for (var path in json.propertyList)
