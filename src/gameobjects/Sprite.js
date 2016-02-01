@@ -742,7 +742,7 @@ var spriteRenderWebGL = function(renderSession) {
         var stx = worldTransform.tx;
         var sty = worldTransform.ty;
         var tint = sprite.tint;
-        var parentAlpha = sprite.parent.worldAlpha;
+        var parentAlpha = sprite.parent.worldAlpha * sprite.alpha;
         var last = lastAnimationInfo.last;
         var ibegin, uvbegin, ibegin2, uvmap;
 
@@ -1048,7 +1048,7 @@ var spriteRenderCanvas = function(renderSession) {
                     uvmap = convert[id2];
             }
 
-            var palpha = this.parent.worldAlpha;
+            var palpha = this.parent.worldAlpha * sprite.alpha;
 
             for (var i = 0, len = frameData.length / 10; i < len; i++) {
                 ibegin = i * 10;
