@@ -232,8 +232,6 @@ Sound.prototype.play = function() {
     return this;
 };
 
-
-
 /**
  * 淡入播放声音
  * @method qc.Sound#fadeIn
@@ -241,6 +239,15 @@ Sound.prototype.play = function() {
  */
 Sound.prototype.fadeIn = function(duration) {
     this.soundPhaser.fadeIn(duration);
+};
+
+/**
+ * 淡出播放声音
+ * @method qc.Sound#fadeOut
+ * @param {number} duration - 淡入的时间，单位为毫秒
+ */
+Sound.prototype.fadeOut = function(duration) {
+    this.soundPhaser.fadeOut(duration);
 };
 
 /**
