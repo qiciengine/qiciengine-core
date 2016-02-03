@@ -4,8 +4,10 @@
  */
 
 /**
- * 游戏对象工厂
- *
+ * The GameObjectFactory is a quick way to create many common game objects.
+ * 'game.add' is the default instance. You can use it like: 
+ *     game.add.image()
+ *     
  * @class qc.GameObjectFactory
  * @constructor
  * @internal
@@ -20,19 +22,19 @@ var GameObjectFactory = qc.GameObjectFactory = function(game) {
 GameObjectFactory.prototype.constructor = GameObjectFactory;
 
 /*
-* 克隆一个对象出来
+* Clone a Node
 */
 GameObjectFactory.prototype.clone = function(ob, parent) {
     if (!ob) return null;
 
     if (ob instanceof Prefab) {
-        // 从预制生成
+        // Clone from a Prefab
         var a = this.game.serializer.restoreBundle(ob.json, parent);
         a._prefab = ob.uuid;
         return a;
     }
 
-    // 其他情况先序列化再反序列化下
+    // Clone from Node, serializer first and then restore.
     var context = {};
     var json = this.game.serializer.buildBundle(ob, context);
     json.dependences = this.game.serializer.combineDependence(context);
@@ -41,7 +43,7 @@ GameObjectFactory.prototype.clone = function(ob, parent) {
 };
 
 /**
- * 创建一个空的节点
+ * Create a Node (Empty GameObject)
  *
  * @method qc.GameObjectFactory#node
  */
@@ -52,7 +54,7 @@ GameObjectFactory.prototype.node = function(parent, uuid) {
 };
 
 /**
- * 创建一个UIText
+ * Create a UIText
  *
  * @method qc.GameObjectFactory#text
  * @return {qc.UIText} The newly created text object.
@@ -62,7 +64,7 @@ GameObjectFactory.prototype.text = function(parent, uuid) {
 };
 
 /**
- * 创建一个UIImage
+ * Create a UIImage
  *
  * @method qc.GameObjectFactory#image
  * @return {qc.UIImage} The newly created image object.
@@ -72,17 +74,17 @@ GameObjectFactory.prototype.image = function(parent, uuid) {
 };
 
 /**
- * 创建一个按钮
+ * Create a Button
  *
  * @param parent
- * @returns {qc.Button} 创建的按钮对象
+ * @returns {qc.Button} The newly created button object.
  */
 GameObjectFactory.prototype.button = function(parent, uuid) {
     return new Button(this.game, parent, uuid);
 };
 
 /**
- * 创建一个开关组件
+ * Create a Toggle
  *
  * @param parent
  * @returns {qc.Toggle}
@@ -92,7 +94,7 @@ GameObjectFactory.prototype.toggle = function(parent, uuid) {
 };
 
 /**
- *  创建一个精灵
+ *  Create a Sprite
  *
  *  @method qc.GameObjectFactory#sprite
  *  @return {qc.Sprite}
@@ -102,7 +104,7 @@ GameObjectFactory.prototype.sprite = function(parent, uuid) {
 };
 
 /**
- *  创建一个声音
+ *  Create a Sound
  *
  *  @method qc.GameObjectFactory#Sound
  *  @return {qc.Sound}
@@ -112,9 +114,10 @@ GameObjectFactory.prototype.sound = function(parent, uuid) {
 };
 
 /**
- * 创建一个滚动窗体
+ * Create a ScrollView
+ * 
  * @method qc.GameObjectFactory#scrollView
- * @param parent {qc.Node} - 父亲节点
+ * @param parent {qc.Node}
  * @returns {qc.ScrollView}
  */
 GameObjectFactory.prototype.scrollView = function(parent, uuid) {
@@ -122,10 +125,11 @@ GameObjectFactory.prototype.scrollView = function(parent, uuid) {
 };
 
 /**
- * 创建一个滚动条
+ * Create a ScrollBar
+ * 
  * @method qc.GameObjectFactory#scrollBar
- * @param parent {qc.Node} - 父亲节点
- * @param createSliders {boolean} - 是否创建滑块
+ * @param parent {qc.Node} - The parent of ScrollBar
+ * @param createSliders {boolean}
  * @returns {qc.ScrollBar}
  */
 GameObjectFactory.prototype.scrollBar = function(parent, createSliders, uuid) {
@@ -157,10 +161,11 @@ GameObjectFactory.prototype.scrollBar = function(parent, createSliders, uuid) {
 };
 
 /**
- * 创建一个进度条
+ * Create a ProgressBar
+ * 
  * @method qc.GameObjectFactory#progressBar
- * @param parent {qc.Node} - 父亲节点
- * @param createSliders {boolean} - 是否创建滑块
+ * @param parent {qc.Node}
+ * @param createSliders {boolean}
  * @returns {qc.progressBar}
  */
 GameObjectFactory.prototype.progressBar = function(parent, createSliders, uuid) {
@@ -188,12 +193,12 @@ GameObjectFactory.prototype.progressBar = function(parent, createSliders, uuid) 
     return progressBar;
 };
 
-
 /**
- * 创建一个滑动条
+ * Create a Slider
+ * 
  * @method qc.GameObjectFactory#progressBar
- * @param parent {qc.Node} - 父亲节点
- * @param createSliders {boolean} - 是否创建滑块
+ * @param parent {qc.Node}
+ * @param createSliders {boolean}
  * @returns {qc.progressBar}
  */
 GameObjectFactory.prototype.slider = function(parent, createSliders, uuid) {
@@ -224,7 +229,7 @@ GameObjectFactory.prototype.slider = function(parent, createSliders, uuid) {
 };
 
 /**
- * 创建一个输入框
+ * Create a InputField
  * @method qc.GameObjectFactory#inputField
  * @param parent
  * @param uuid
@@ -234,7 +239,20 @@ GameObjectFactory.prototype.inputField = function(parent, uuid) {
 };
 
 /**
- * 创建一个瓦片地图
+ * Create a Dropdown
+ * 
+ * @method qc.GameObjectFactory#dropdown
+ * @param parent
+ * @param uuid
+ * @returns {qc.Dropdown}
+ */
+GameObjectFactory.prototype.dropdown = function(parent, uuid) {
+    return new qc.Dropdown(this.game, parent, uuid);  
+};
+
+/**
+ * Createa Tilemap
+ * 
  * @method qc.GameObjectFactory#tilemap
  * @param parent
  * @param uuid
@@ -245,7 +263,8 @@ GameObjectFactory.prototype.tilemap = function(parent, uuid) {
 };
 
 /**
- * 创建一个瓦片地图图层
+ * Create a TileLayer
+ * 
  * @param parent
  * @param uuid
  * @returns {qc.TileLayer}
@@ -255,7 +274,8 @@ GameObjectFactory.prototype.tileLayer = function(parent, uuid) {
 };
 
 /**
- * 创建一个对象图层
+ * Creaet a ObjectLayer
+ * 
  * @param parent
  * @param uuid
  * @returns {qc.ObjectLayer}
@@ -265,7 +285,8 @@ GameObjectFactory.prototype.objectLayer = function(parent, uuid) {
 };
 
 /**
- * 创建一个DOM对象
+ * Create a DOM
+ * 
  * @param parent
  * @param uuid
  * @returns {qc.Dom}
@@ -275,7 +296,8 @@ GameObjectFactory.prototype.dom = function(parent, uuid) {
 };
 
 /**
- * 创建一个Graphics对象
+ * Create a Graphics object.
+ * 
  * @param parent
  * @param uuid
  * @returns {qc.Graphics}

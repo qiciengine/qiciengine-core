@@ -81,6 +81,8 @@ Serializer.prototype.newNode = function(clazz, parent, uuid) {
         return this.game.add.dom(parent, uuid);
     case 'qc.Graphics':
         return this.game.add.graphics(parent, uuid);
+    case 'qc.Dropdown':
+        return this.game.add.dropdown(parent, uuid);
     default:
         // 尝试查找自定义构造方法，通常用于用户扩展的Node
         var method = Serializer.customDeserializers[clazz];
