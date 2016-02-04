@@ -126,6 +126,7 @@ module.exports = function (grunt) {
             'src/gameobjects/ObjectLayer.js',
             'src/gameobjects/Dom.js',
             'src/gameobjects/Graphics.js',
+            'src/gameobjects/Dropdown.js',
 
             'src/components/Bounds.js',
             'src/components/LayoutElement.js',

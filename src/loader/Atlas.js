@@ -100,6 +100,14 @@ Object.defineProperties(Atlas.prototype, {
      */
     uuid : {
         get : function() { return this.meta.uuid; }
+    },
+
+    /**
+     * @property {string} class - 类的名字
+     * @internal
+     */
+    class : {
+        get : function() { return 'qc.Atlas'; }
     }
 });
 
