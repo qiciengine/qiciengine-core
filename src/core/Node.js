@@ -23,6 +23,9 @@ var Node = qc.Node = function(phaser, parent, uuid) {
     // 设置全局唯一标示
     self.uuid = uuid || self.game.math.uuid();
 
+    // 设置全局唯一名字
+    self._uniqueName = '';
+
     // 是否允许交互，默认为false，控制onDown/onUp/onClick等事件
     self._interactive = false;
 
@@ -147,6 +150,26 @@ Object.defineProperties(Node.prototype, {
 
             // 派发名字变化事件
             this._dispatchModelChangeEvent('name', this);
+        }
+    },
+
+    /**
+     * 唯一名称，如果有指定，可通过 qc.N(uniqueName) 直接取得 node 对象
+     * @proeprty name
+     * @type string
+     */
+    'uniqueName': {
+        get: function() {
+            return this._uniqueName;
+        },
+        set: function(v) {
+            if (this._uniqueName)
+                // 先移除旧的名字映射
+                this.game.nodePool.removeName(this._uniqueName);
+
+            this._uniqueName = v;
+            if (this._uniqueName && !this.game.nodePool.findByName(this._uniqueName))
+                this.game.nodePool.addName(this._uniqueName, this.uuid);
         }
     },
 
@@ -356,6 +379,7 @@ Node.prototype.addScript = function(script, dispatchAwake) {
     // 挂载时立刻调用其awake函数
     c.uuid = this.game.math.uuid();
     c._clazz = script;
+    this[c.key] = c;
     this.scripts.push(c);
     this.scriptMap[script] = c;
     if (dispatchAwake || dispatchAwake === undefined) {
@@ -386,7 +410,11 @@ Node.prototype.removeScript = function(script) {
     var index = this.scripts.indexOf(script);
     if (index > -1)
         this.scripts.splice(index, 1);
-    delete this.scriptMap[script];
+    delete this.scriptMap[script.class];
+
+    if (this[script._key] && this[script._key].uuid === script.uuid)
+        // 将旧的应用移除
+        delete this[script._key];
 };
 
 /**

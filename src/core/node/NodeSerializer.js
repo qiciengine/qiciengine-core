@@ -33,6 +33,7 @@ Node.prototype.getMeta = function() {
         _prefab : s.STRING,
         __lock : s.BOOLEAN,
         name : s.STRING,
+        uniqueName : s.STRING,
         ignoreDestroy : s.BOOLEAN,
         alpha : s.NUMBER,
         visible : s.BOOLEAN,
@@ -165,12 +166,12 @@ Node.prototype._packScripts = function(context) {
             }
             data = this.game.serializer.buildBundle(c, context, data);
         }
-        
+
         list.push({
             clazz: c._clazz,
             data: c.uuid
         });
-        
+
         // 记录下序列化结果
         if (!this.__json) {
             this.__json = {
@@ -196,7 +197,7 @@ Node.prototype._unpackScripts = function(data) {
         else {
             d = d.data;
         }
-        
+
         var clazz = qc.Util.findClass(scriptJson.clazz);
         if (typeof clazz !== 'function') {
             if (d && d.uuid) {
@@ -207,7 +208,7 @@ Node.prototype._unpackScripts = function(data) {
             console.error('Class: ' + scriptJson.clazz + ' is not exist!');
             continue;
         }
-        
+
         try {
             // 还原出脚本的属性信息
             var c = this.addScript(scriptJson.clazz, false);
@@ -216,20 +217,20 @@ Node.prototype._unpackScripts = function(data) {
                 meta = c.getMeta();
             for (var k in meta) {
                 try {
-                    this.game.serializer.fromJson(c, d, k, meta[k]);    
+                    this.game.serializer.fromJson(c, d, k, meta[k]);
                 }
                 catch (e) {
                     console.error('Deserialize fail!', e);
-                    qc.Util.popupError(e.message); 
+                    qc.Util.popupError(e.message);
                 }
-            }  
+            }
         }
         catch (e) {
             console.error('Deserialize error!', e);
-            qc.Util.popupError(e.message); 
+            qc.Util.popupError(e.message);
         }
     }
-    
+
     if (!this.game.device.editor) {
         delete this.__json;
     }
