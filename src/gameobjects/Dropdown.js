@@ -356,9 +356,18 @@ Dropdown.prototype._updatePosition = function() {
         list = self._list;
     if (!list) return;
 
+    // Prevent the dropdown being displayed outside the bounds of the Canvas
     self.template.visible = true;
+    var dpBounds = qc.Bounds.getBox(self, Bounds.USE_BOUNDS, true, 0),
+        templateBounds = qc.Bounds.getBox(self.template, Bounds.USE_BOUNDS, true, 0), 
+        y = templateBounds.y;
+    if (templateBounds.height < self.game.world.height / 2 &&
+        templateBounds.y + templateBounds.height > self.game.world.height) {
+        var offset = templateBounds.y - (dpBounds.y + dpBounds.height);
+        y = dpBounds.y - offset - templateBounds.height;
+    }
     var pos = self.template.getWorldPosition();
-    list.x = pos.x, list.y = pos.y;
+    list.x = pos.x, list.y = y - list.pivotY * list.height;
     var scale = self.template.getWorldScale();
     list.scaleX = scale.x, list.scaleY = scale.y;
     list.rotation = self.template.getWorldRotation();
