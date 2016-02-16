@@ -102,17 +102,6 @@ Object.defineProperties(Button.prototype, {
     },
 
     /**
-     * @property {string} texture - 按钮的贴图
-     * @override qc.UIImage#frame
-     */
-    frame : {
-        get : function() { return Object.getOwnPropertyDescriptor(qc.UIImage.prototype, 'frame').get.call(this); },
-        set : function(v) {
-            Object.getOwnPropertyDescriptor(qc.UIImage.prototype, 'frame').set.call(this, v);
-        }
-    },
-
-    /**
      * @property {boolean} nativeEvent - 是否响应浏览器直接事件
      */
     supportNativeEvent : {

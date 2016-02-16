@@ -124,6 +124,15 @@ Atlas.prototype.getFrame = function(frame) {
 };
 
 /**
+ * Get the texture from atlas
+ * @method qc.Atlas#getTexture
+ * @param frame {string|number} - The name or index of the texture
+ */
+Atlas.prototype.getTexture = function(frame) {
+    return new qc.Texture(this, frame);
+};
+
+/**
  * 取得某个图片的9宫格信息
  * @param {string|undefined} frame
  * @return [left, top, right, bottom]

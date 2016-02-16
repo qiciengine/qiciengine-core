@@ -19,9 +19,9 @@ var TransitionBehaviour = qc.defineBehaviour('qc.TransitionBehaviour', qc.Behavi
 {
     target : qc.Serializer.NODE,
     _transition : qc.Serializer.NUMBER,
-    _normalTexture : qc.Serializer.AUTO,
-    _pressedTexture : qc.Serializer.AUTO,
-    _disabledTexture : qc.Serializer.AUTO,
+    _normalTexture : qc.Serializer.TEXTURE,
+    _pressedTexture : qc.Serializer.TEXTURE,
+    _disabledTexture : qc.Serializer.TEXTURE,
     _normalColor : qc.Serializer.COLOR,
     _pressedColor : qc.Serializer.COLOR,
     _disabledColor : qc.Serializer.COLOR
@@ -71,7 +71,7 @@ Object.defineProperties(TransitionBehaviour.prototype, {
             // 如果当前处于普通状态，则更新下贴图
             if (this.gameObject.state === qc.UIState.NORMAL &&
                 this.transition === qc.Transition.TEXTURE_SWAP)
-                this.target.frame = this.normalTexture;
+                this.target.texture = this.normalTexture;
         }
     },
 
@@ -88,7 +88,7 @@ Object.defineProperties(TransitionBehaviour.prototype, {
             //  如果当前处于按下状态，则更新下贴图
             if (this.gameObject.state === qc.UIState.PRESSED &&
                 this.transition === qc.Transition.TEXTURE_SWAP)
-                this.target.frame = this.pressedTexture;
+                this.target.texture = this.pressedTexture;
         }
     },
 
@@ -105,7 +105,7 @@ Object.defineProperties(TransitionBehaviour.prototype, {
             //  如果当前处于置灰状态，则更新下贴图
             if (this.gameObject.state === qc.UIState.DISABLED &&
                 this.transition === qc.Transition.TEXTURE_SWAP)
-                this.target.frame = this.disabledTexture;
+                this.target.texture = this.disabledTexture;
         }
     },
 
@@ -187,15 +187,6 @@ Object.defineProperties(TransitionBehaviour.prototype, {
     }
 });
 
-// 默认普通状态的贴图
-TransitionBehaviour.prototype._normalTexture = '';
-
-// 默认按下状态的贴图
-TransitionBehaviour.prototype._pressedTexture = '';
-
-// 默认无效状态的贴图
-TransitionBehaviour.prototype._disabledTexture = '';
-
 // 默认正常混合色
 TransitionBehaviour.prototype._normalColor = Color.white;
 
@@ -242,15 +233,15 @@ TransitionBehaviour.prototype._reset = function() {
         switch (this.gameObject.state) {
         case qc.UIState.NORMAL:
             if (this.normalTexture)
-                this.target.frame = this.normalTexture;
+                this.target.texture = this.normalTexture;
             break;
         case qc.UIState.PRESSED:
             if (this.pressedTexture)
-                this.target.frame = this.pressedTexture;
+                this.target.texture = this.pressedTexture;
             break;
         case qc.UIState.DISABLED:
             if (this.disabledTexture)
-                this.target.frame = this.disabledTexture;
+                this.target.texture = this.disabledTexture;
             break;
         }
         break;

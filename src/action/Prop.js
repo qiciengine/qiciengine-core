@@ -65,7 +65,7 @@ Prop.prototype.saveValue = function(type, value, context) {
     case Serializer.TEXTURE:
         if (!value)
             ret = null;
-        else if (!(value[0] instanceof qc.Atlas))
+        else if (!(value[0] instanceof qc.Texture))
             ret = null;
         else
         {
@@ -141,7 +141,7 @@ Prop.prototype.restoreValue = function(type, value) {
                 console.error('贴图资源尚未载入，无法反序列化。', value);
                 ret = [null, frame];
             }
-            else if (!(atlas instanceof qc.Atlas))
+            else if (!(atlas instanceof qc.Texture))
                 ret = [null, frame];
             else
                 ret = [atlas, frame];

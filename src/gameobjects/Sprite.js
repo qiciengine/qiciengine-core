@@ -79,7 +79,7 @@ Sprite.prototype.playAnimation = function(animationName, speed, loop) {
         var animation = self._armature.animation;
 
         if (animation.animationNameList.indexOf(animationName) < 0) {
-            console.warn("没有动作名为", animationName, "的动作");
+            console.warn("Animation is not exist.", animationName);
             return;
         }
 
@@ -94,7 +94,7 @@ Sprite.prototype.playAnimation = function(animationName, speed, loop) {
                     break;
                 }
             }
-            if (animationData) {  playDuration = animationData.duration / speed;  }
+            if (animationData) { playDuration = animationData.duration / speed; }
         }
 
         var loopTimes;
@@ -272,108 +272,112 @@ Sprite.prototype.getAnimationInfo = function(animationName) {
 
 Object.defineProperties(Sprite.prototype, {
     /**
-     *  @property {qc.Atlas} texture - 图集
+     *  @property {qc.Texture} texture
      */
-    texture : {
+    texture: {
         get : function() {
+            if (this._texture) this._texture.frame = this.frame;
             return this._texture;
         },
-        set : function(atlas) {
+        set : function(texture) {
+            var self = this;
+            
             // 如果之前是骨骼动画，需要移除掉骨骼
-            if (this.animationType === Sprite.DRAGON_BONES &&
-                this._boneBase) {
-                this.removeChild(this._boneBase);
-                this._armature = null;
-                this._boneBase = null;
+            if (self.animationType === Sprite.DRAGON_BONES && self._boneBase) {
+                self.removeChild(self._boneBase);
+                self._armature = null;
+                self._boneBase = null;
             }
 
-            if (!atlas) {
-                this._texture = null;
-                this.phaser.loadTexture(null, this.frame);
-                this.animationType = Sprite.NONE_ANIMATION;
+            if (!texture) {
+                self._texture = null;
+                self.phaser.loadTexture(null, self.frame);
+                self.animationType = Sprite.NONE_ANIMATION;
                 return;
             }
-            this._texture = atlas;
+            if (texture instanceof qc.Atlas) texture = new qc.Texture(texture, self.frame);
+            self._texture = texture;
+            var atlas = texture.atlas;
 
             // 记录动作信息
-            this.animationType = atlas.animation ? atlas.animation.type : Sprite.NONE_ANIMATION;
-            if (this.animationType === Sprite.DRAGON_BONES) {
+            self.animationType = atlas.animation ? atlas.animation.type : Sprite.NONE_ANIMATION;
+            if (self.animationType === Sprite.DRAGON_BONES) {
                 var armature = self._armature = qc.dragonBones.makeQcArmature(
                     atlas.animation.data,
                     atlas.json,
                     atlas.img, atlas.key);
                 if (!armature) {
-                    console.warn("生成骨骼失败，参数：（img:", atlas.img,
-                        "atlas:", atlas.json, "skeleton:", atlas.animation.data, "）");
+                    console.warn("makeQcArmature failed:(img:", atlas.img,
+                        "atlas:", atlas.json, "skeleton:", atlas.animation.data, ")");
                     return;
                 }
-                this._armature = armature;
+                self._armature = armature;
 
                 // 添加到世界中
                 var bonesBase = armature.getDisplay();
-                this.addChild(bonesBase);
-                this._boneBase = bonesBase;
+                self.addChild(bonesBase);
+                self._boneBase = bonesBase;
 
                 // 集成上个骨骼的 colorTint
-                this.colorTint = this.colorTint;
+                self.colorTint = self.colorTint;
             }
-            else if (this.animationType === Sprite.FRAME_ANIMATION) {
-                this._animation = atlas.animation.data.animations;
-                this.phaser.animations = new Phaser.AnimationManager(this.phaser);
+            else if (self.animationType === Sprite.FRAME_ANIMATION) {
+                self._animation = atlas.animation.data.animations;
+                self.phaser.animations = new Phaser.AnimationManager(self.phaser);
             }
-            else if (this.animationType === Sprite.FRAME_SAMPLES) {
-                this._animation = atlas.animation.data.samples;
-                this.phaser.animations = new Phaser.AnimationManager(this.phaser);
+            else if (self.animationType === Sprite.FRAME_SAMPLES) {
+                self._animation = atlas.animation.data.samples;
+                self.phaser.animations = new Phaser.AnimationManager(self.phaser);
             }
 
             // 如果frame不存在，则使用第一帧
-            var frame = this.frame;
-            if (!atlas.getFrame(this.frame)) frame = 0;
-
+            if (!atlas.getFrame(texture.frame)) texture.frame = 0;
+            
             // 载入贴图（通过设置frame来起效）
-            this.phaser.key = atlas.key;
-            this.frame = frame;
-            this.paused = false;
+            self.phaser.key = atlas.key;
+            self.frame = texture.frame;
+            self.paused = false;
 
             // 绑定事件监听
-            if (this.animationType === Sprite.DRAGON_BONES) {
-                this.bindDragonBonesEvent();
+            if (self.animationType === Sprite.DRAGON_BONES) {
+                self.bindDragonBonesEvent();
             }
 
             // 如果有默认动作，尝试播放 or 删除之
-            if (this.defaultAnimation) {
-                if (!this.animationNameList || this.animationNameList.indexOf(this.defaultAnimation) < 0) {
+            if (self.defaultAnimation) {
+                if (!self.animationNameList || self.animationNameList.indexOf(self.defaultAnimation) < 0) {
                     // 没有这个动作
-                    this.defaultAnimation = null;
+                    self.defaultAnimation = null;
                 }
                 else
-                    this.playAnimation(this.defaultAnimation);
+                    self.playAnimation(self.defaultAnimation);
             }
 
-            this._dispatchLayoutArgumentChanged('size');
+            self._dispatchLayoutArgumentChanged('size');
 
-            if (this._onTextureChanged) {
-                this._onTextureChanged.dispatch();
+            if (self._onTextureChanged) {
+                self._onTextureChanged.dispatch();
             }
         }
     },
 
     /**
      *  获取or设置当前的图片帧，一般是图集才会用到该属性（可以为数字或别名）
+     *  废弃，请使用texture直接赋值
      *  @property {int|string} frame
+     *  @Obsolete
      */
-    frame : {
+    frame: {
         get : function() {
-            if (!this.texture) return null;
             return this.phaser.frameName;
         },
         set : function(value) {
             if (!this.texture) return;
 
-            var frameNames = this.texture.frameNames || [0];
+            var frameNames = this.texture.atlas.frameNames || [0];
             if (typeof(value) === 'string' && frameNames.indexOf(value) === -1)
                 return;
-            this.phaser.loadTexture(this.texture.key, value, false);
+            this.phaser.loadTexture(this.texture.atlas.key, value, false);
             this._dispatchLayoutArgumentChanged('size');
 
             if (this._onTextureChanged) {
@@ -546,7 +550,7 @@ Object.defineProperties(Sprite.prototype, {
             case qc.Sprite.FRAME_ANIMATION :
                 if (!this.texture)
                     return null;
-                var allAnimationData = this.texture.animation.data.animations;
+                var allAnimationData = this.texture.atlas.animation.data.animations;
                 if (!allAnimationData)
                     return null;
                 return Object.keys(allAnimationData);

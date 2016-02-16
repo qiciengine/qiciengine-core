@@ -29,7 +29,7 @@ Serializer.prototype.getAutoType = function(v) {
     if (typeof v === 'string') return Serializer.STRING;
     if (typeof v === 'boolean') return Serializer.BOOLEAN;
     if (v instanceof qc.Node) return Serializer.NODE;
-    if (v instanceof qc.Atlas) return Serializer.TEXTURE;
+    if (v instanceof qc.Texture) return Serializer.TEXTURE;
     if (v instanceof qc.SoundAsset) return Serializer.AUDIO;
     if (v instanceof qc.TextAsset) return Serializer.TEXTASSET;
     if (v instanceof qc.ActionAsset) return Serializer.ACTION;
