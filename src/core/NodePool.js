@@ -88,22 +88,3 @@ NodePool.prototype.removeName = function(uniqueName) {
 NodePool.prototype.addName = function(uniqueName, uuid) {
     this._nameUuidMap[uniqueName] = uuid;
 }
-
-/**
- * 根据唯一名字查找对象
- */
-qc.N = function(uniqueName) {
-
-    var game;
-    if (window.parent && window.parent.G)
-        game = window.parent.G.game;
-    else if (typeof(qici) !== 'undefined' && qici.config)
-    {
-        var gameInstance = qici.config.gameInstance;
-        game = window[gameInstance];
-    }
-    if (!game)
-        return;
-
-    return game.nodePool.findByName(uniqueName);
-}

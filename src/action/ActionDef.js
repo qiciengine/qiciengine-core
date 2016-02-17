@@ -53,7 +53,7 @@ qc.ActionProperties[qc.PROP_POSITON] = {
         ],
 };
 qc.ActionProperties[qc.PROP_ANCHORED_POSITION] = {
-        name: 'Anchored Position',
+        name: 'AnchoredPosition',
         class: 'qc.CurveProp',
         curve: true,
         properties: [
@@ -217,7 +217,7 @@ qc.ActionProperties[qc.PROP_TEXT] = {
         ],
 };
 qc.ActionProperties[qc.PROP_TOGGLE_ON] = {
-        name: 'Toggle.On',
+        name: 'ToggleOn',
         class: 'qc.KeyProp',
         forceUpdate: true,
         properties: [
@@ -229,7 +229,7 @@ qc.ActionProperties[qc.PROP_TOGGLE_ON] = {
         ],
 };
 qc.ActionProperties[qc.PROP_SCROLLBAR_VALUE] = {
-        name: 'ScrollBar.value',
+        name: 'ScrollBarValue',
         class: 'qc.CurveProp',
         curve: true,
         properties: [
@@ -240,7 +240,7 @@ qc.ActionProperties[qc.PROP_SCROLLBAR_VALUE] = {
         ],
 };
 qc.ActionProperties[qc.PROP_SCROLLVIEW_POSITION] = {
-        name: 'ScrollView.Position',
+        name: 'ScrollViewPosition',
         class: 'qc.CurveProp',
         curve: true,
         properties: [
@@ -255,7 +255,7 @@ qc.ActionProperties[qc.PROP_SCROLLVIEW_POSITION] = {
         ],
 };
 qc.ActionProperties[qc.PROP_PROGRESSBAR_VALUE] = {
-        name: 'ProgressBar.value',
+        name: 'ProgressBarValue',
         class: 'qc.CurveProp',
         curve: true,
         properties: [
@@ -266,7 +266,7 @@ qc.ActionProperties[qc.PROP_PROGRESSBAR_VALUE] = {
         ],
 };
 qc.ActionProperties[qc.PROP_SLIDER_VALUE] = {
-        name: 'Slider.value',
+        name: 'SliderValue',
         class: 'qc.CurveProp',
         curve: true,
         properties: [
@@ -292,7 +292,7 @@ qc.ActionProperties[qc.PROP_SOUND] = {
         ],
 };
 qc.ActionProperties[qc.PROP_DOM_INNERHTML] = {
-        name: 'Dom.innerHTML',
+        name: 'DomInnerHTML',
         class: 'qc.KeyProp',
         forceUpdate: true,
         properties: [
@@ -304,7 +304,7 @@ qc.ActionProperties[qc.PROP_DOM_INNERHTML] = {
         ],
 };
 qc.ActionProperties[qc.PROP_TILEMAP_POSITION] = {
-        name: 'Tilemap.position',
+        name: 'TilemapPosition',
         class: 'qc.CurveProp',
         curve: true,
         properties: [
