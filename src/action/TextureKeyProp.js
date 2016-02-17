@@ -23,6 +23,5 @@ TextureKeyProp.prototype.updateAttrib = function(target, attrib, value) {
         value = [texture, frame];
     }
     var texture = value[0], frame = value[1];
-    target.texture = texture;
-    target.frame = frame;
+    target.texture = new qc.Texture(texture, frame);
 }

@@ -276,8 +276,8 @@ Object.defineProperties(Sprite.prototype, {
      */
     texture: {
         get : function() {
-            if (this._texture) this._texture.frame = this.frame;
-            return this._texture;
+            if (!this._atlas) return null;
+            return new qc.Texture(this._atlas, this.frame);
         },
         set : function(texture) {
             var self = this;
@@ -290,14 +290,13 @@ Object.defineProperties(Sprite.prototype, {
             }
 
             if (!texture) {
-                self._texture = null;
+                self._atlas = null;
                 self.phaser.loadTexture(null, self.frame);
                 self.animationType = Sprite.NONE_ANIMATION;
                 return;
             }
             if (texture instanceof qc.Atlas) texture = new qc.Texture(texture, self.frame);
-            self._texture = texture;
-            var atlas = texture.atlas;
+            var atlas = self._atlas = texture.atlas;
 
             // 记录动作信息
             self.animationType = atlas.animation ? atlas.animation.type : Sprite.NONE_ANIMATION;
@@ -363,9 +362,7 @@ Object.defineProperties(Sprite.prototype, {
 
     /**
      *  获取or设置当前的图片帧，一般是图集才会用到该属性（可以为数字或别名）
-     *  废弃，请使用texture直接赋值
      *  @property {int|string} frame
-     *  @Obsolete
      */
     frame: {
         get : function() {
@@ -731,7 +728,7 @@ var spriteRenderWebGL = function(renderSession) {
 
         var frameIndex = this.animations.currentAnim._frameIndex;
 
-        var animationData = _qc.texture.animation.data;
+        var animationData = _qc.texture.atlas.animation.data;
         var uvs = animationData.uvs;
         var lastAnimationName = _qc.lastAnimationName;
         var lastAnimationInfo = _qc._animation[lastAnimationName];
@@ -998,7 +995,7 @@ var spriteRenderCanvas = function(renderSession) {
 
             var sprite = this;
             var frameIndex = this.animations.currentAnim._frameIndex;
-            var animationData = _qc.texture.animation.data;
+            var animationData = _qc.texture.atlas.animation.data;
             var uvs = animationData.uvs;
             var lastAnimationName = _qc.lastAnimationName;
             var curAnimationFrames = _qc._animation[lastAnimationName].frames;
@@ -1158,7 +1155,7 @@ Sprite.prototype.getSampledAnimationBounds = function() {
     if (!animationName)
         return new qc.Rectangle(0, 0, 0, 0);
 
-    var animationData = this.texture.animation.data;
+    var animationData = this.texture.atlas.animation.data;
     var boundsData = animationData.bounds;
 
     if (!boundsData)

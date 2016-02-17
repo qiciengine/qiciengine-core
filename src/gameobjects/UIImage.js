@@ -50,48 +50,39 @@ Object.defineProperties(UIImage.prototype, {
      */
     texture : {
         get : function() {
-            return this._texture;
+            if (!this._atlas) return null;
+            return new qc.Texture(this._atlas, this.frame);
         },
         set : function(value) {
+            var self = this;
             if (!value) {
-                this._texture = null;
-                this.phaser.loadTexture(null, this.frame);
+                self._atlas = null;
+                self.phaser.loadTexture(null, self.frame);
                 return;
             }
-            if (this._texture === value) return;
             
             if (value instanceof qc.Atlas) {
                 value = value.getTexture(this.frame);
             }
-            if (this._texture && value && this._texture.atlas === value.atlas && this._texture.frame === value.frame) return;
-            this._texture = value;
+            if (self._atlas === value.atlas && self.frame === value.frame) return;
+            self._atlas = value.atlas;
 
             // 如果frame不存在，则使用第一帧
             if (!value.atlas.getFrame(value.frame)) value.frame = 0;
 
             // 载入图片(通过设置frame来起效)
-            this.phaser.key = value.atlas.key;
-            this.frame = value.frame;
-
-            this._resetNinePadding();
-            this._dispatchLayoutArgumentChanged('size');
-            this.phaser.displayChanged(qc.DisplayChangeStatus.TEXTURE);
-            if (this._onTextureChanged) {
-                this._onTextureChanged.dispatch();
-            }
+            self.phaser.key = value.atlas.key;
+            self.frame = value.frame;
         }
     },
 
     /**
      * 获取or设置当前的图片帧，一般是图集才会用到该属性（可以为数字或别名）
-     * 废弃，请使用texture直接赋值
      * @property {int|string} frame
-     * @Obsolete
      */
     frame : {
         get: function () {
-            if (!this.texture) return null;
-            return this.texture.frameName;
+            return this.phaser.frameName;
         },
 
         set: function (value) {
@@ -99,7 +90,6 @@ Object.defineProperties(UIImage.prototype, {
             var frameNames = this.texture.atlas.frameNames || [0];
             if (typeof(value) === 'string' && frameNames.indexOf(value) === -1)
                 return;
-            this.texture.frame = value;
             this.phaser.loadTexture(this.texture.atlas.key, value);
             this.setWidth(this.width);
             this.setHeight(this.height);

@@ -69,7 +69,7 @@ Prop.prototype.saveValue = function(type, value, context) {
             ret = null;
         else
         {
-            var atlas = value[0], frame = value[1];
+            var atlas = value[0].atlas, frame = value[1];
             // 记录资源依赖
             context.dependences.push({
                 key : atlas.key,
@@ -141,7 +141,7 @@ Prop.prototype.restoreValue = function(type, value) {
                 console.error('贴图资源尚未载入，无法反序列化。', value);
                 ret = [null, frame];
             }
-            else if (!(atlas instanceof qc.Texture))
+            else if (!(atlas instanceof qc.Atlas))
                 ret = [null, frame];
             else
                 ret = [atlas, frame];
