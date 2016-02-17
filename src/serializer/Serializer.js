@@ -129,6 +129,8 @@ Serializer.prototype.restoreBundle = function(json, parent, restoreChild) {
         this.restoreContext = {};
     }
 
+    this.isRestoring = true;
+
     var uuid = json.data.uuid;
     if (this.game.nodePool.find(uuid))
         uuid = this.game.math.uuid();
@@ -168,6 +170,7 @@ Serializer.prototype.restoreBundle = function(json, parent, restoreChild) {
 
     // 搞定收工
     this.restoreContext = {};
+    this.isRestoring = false;
     return ob;
 };
 
@@ -179,6 +182,7 @@ Serializer.prototype.restoreState = function(json) {
     // 先还原出所有子孙
     var arr = [];
     this.restoreContext = {};
+    this.isRestoring = true;
     for (var i in json.children) {
         var child = this.restoreBundle(json.children[i], this.game.world, true);
         arr.push(child);
@@ -200,6 +204,7 @@ Serializer.prototype.restoreState = function(json) {
 
     // 清理下
     this.restoreContext = {};
+    this.isRestoring = false;
 };
 
 /**

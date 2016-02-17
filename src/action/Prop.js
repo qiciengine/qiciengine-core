@@ -65,11 +65,11 @@ Prop.prototype.saveValue = function(type, value, context) {
     case Serializer.TEXTURE:
         if (!value)
             ret = null;
-        else if (!(value[0] instanceof qc.Texture))
+        else if (!(value[0] instanceof qc.Atlas))
             ret = null;
         else
         {
-            var atlas = value[0].atlas, frame = value[1];
+            var atlas = value[0], frame = value[1];
             // 记录资源依赖
             context.dependences.push({
                 key : atlas.key,
