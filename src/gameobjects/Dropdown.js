@@ -57,6 +57,7 @@ var Dropdown = qc.Dropdown = function(game, parent, uuid) {
     self.name = 'Dropdown';
     self.interactive = true;
     self._items = [];
+    self._value = -1;
     if (restore !== true) {
         self.captionText = game.add.text(self);
         self.captionText.name = 'Label';
@@ -144,7 +145,7 @@ Object.defineProperties(Dropdown.prototype, {
             return this.options.length > 0 ? this._value : -1;
         },
         set: function(v) {
-            if (this._value === v || this.options.length === 0) return;
+            if (this._value === v || v >= this.options.length) return;
             if (typeof this._value === 'number') {
                 var oldItem = this._items[this._value],
                     newItem = this._items[v];
@@ -152,6 +153,8 @@ Object.defineProperties(Dropdown.prototype, {
                 if (oldItem) oldItem.getScript('qc.DropdownItem').redraw();
                 if (newItem) newItem.getScript('qc.DropdownItem').redraw();
                 this._redraw();
+                
+                this.onValueChange.dispatch(v);
             }
         }
     },
@@ -178,7 +181,7 @@ Object.defineProperties(Dropdown.prototype, {
 Dropdown.prototype._dispatchAwake = function() {
     var self = this;
     Node.prototype._dispatchAwake.call(self);
-    if (!self._value) self._value = 0;
+    if (!self._value || self.options.length === 0) self._value = -1;
     self._redraw();
 };
 
@@ -189,7 +192,14 @@ Dropdown.prototype._dispatchAwake = function() {
  */
 Dropdown.prototype.addOptions = function(options) {
     var self = this;
-    self.options.concat(options);
+    var list = self.options.concat(options);
+    if (self.options.length === 0) {
+        self.options = list;
+        this.value = 0;
+    }
+    else {
+        self.options = list;
+    }
     if (self.isFocused) {
         // re-show dropdown list
         self.show();
@@ -203,9 +213,16 @@ Dropdown.prototype.addOptions = function(options) {
 Dropdown.prototype.clearOptions = function() {
     var self = this;
     self.options = [];
+    if (self._value >= 0)
+    {
+        self._value = -1;
+        self.onValueChange.dispatch(self._value);
+    }
+    
     if (self.isFocused) {
         self.hide();
     }
+    self._redraw();
 };
 
 /**
@@ -265,6 +282,7 @@ Dropdown.prototype.hide = function() {
         self._maskNode.destroy();
         delete self._maskNode;
     }
+    self._items = [];
 };
 
 /**
@@ -361,20 +379,19 @@ Dropdown.prototype._updatePosition = function() {
     var dpBounds = qc.Bounds.getBox(self, Bounds.USE_BOUNDS, true, 0),
         templateBounds = qc.Bounds.getBox(self.template, Bounds.USE_BOUNDS, true, 0), 
         y = templateBounds.y;
-    if (templateBounds.height < self.game.world.height / 2 &&
+    if (templateBounds.height < self.game.world.height/2 &&
         templateBounds.y + templateBounds.height > self.game.world.height) {
         var offset = templateBounds.y - (dpBounds.y + dpBounds.height);
         y = dpBounds.y - offset - templateBounds.height;
     }
     var pos = self.template.getWorldPosition();
+    list.setAnchor(new qc.Point(0, 0), new qc.Point(0, 0));
     list.x = pos.x, list.y = y - list.pivotY * list.height;
     var scale = self.template.getWorldScale();
     list.scaleX = scale.x, list.scaleY = scale.y;
     list.rotation = self.template.getWorldRotation();
-    
-    var pScale = self.template.parent.getWorldScale();
-    list.width = self.template.width * pScale.x;
-    list.height = self.template.height * pScale.y;
+    list.width = self.template.width;
+    list.height = self.template.height;
     
     // Resize maskNode and fill the screen.
     self._maskNode.x = self._maskNode.y = 0;
