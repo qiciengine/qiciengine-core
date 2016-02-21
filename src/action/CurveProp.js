@@ -26,6 +26,14 @@ CurveProp.prototype.fromJson = function(propertyInfo, json) {
     for (var i = 0; i < properties.length; i++)
     {
         var attrib = properties[i].attrib;
+        var attribArray;
+        if (typeof(attrib) === 'string')
+        {
+            // 属性可能为 'Component.Attrib' 格式
+            var arr = attrib.split('.');
+            if (arr.length > 1)
+                attribArray = arr;
+        }
         this.propDefaultValue[attrib] = properties[i].default;
         if (!json)
         {
@@ -34,6 +42,7 @@ CurveProp.prototype.fromJson = function(propertyInfo, json) {
                 curveType: qc.CURVE_TYPE_ABSOLUTE,
                 curve : new qc.BezierCurve(),
                 to : 0,
+                attribArray: attribArray,
             }
             continue;
         }
@@ -45,6 +54,7 @@ CurveProp.prototype.fromJson = function(propertyInfo, json) {
             curveType : data[0],
             curve : curve,
             to : 0,
+            attribArray: attribArray,
         };
         curve.fromJson(data[1]);
         if (data[0] >= qc.CURVE_TYPE_TWEEN_RELATIVE)
@@ -141,7 +151,27 @@ CurveProp.prototype.getFromValue = function(target, attrib, time) {
     if (!target)
         return;
 
-    var targetValue = target[attrib];
+    var targetValue;
+    if (prop.attribArray)
+    {
+        var len = prop.attribArray.length;
+        if (len === 2)
+            targetValue = target[prop.attribArray[0]] ? target[prop.attribArray[0]][prop.attribArray[1]] : null;
+        else if (len > 2)
+        {
+            var o = target;
+            for (var i = 0; i < len - 1; i++)
+            {
+                o = o[prop.attribArray[i]];
+                if (!o)
+                    break;
+            }
+            if (o)
+                targetValue = o[prop.attribArray[len - 1]];
+        }
+    }
+    else
+        targetValue = target[attrib];
     var value = this.getValue(attrib, time, true) || 0;
     var to = prop.to;
     var fromValue = value;
@@ -296,11 +326,34 @@ CurveProp.prototype.update = function(target, elapsedTime, isBegin, forceUpdate)
     {
         var prop = this.propMap[attrib];
         var curveType = prop.curveType;
+        var targetValue;
         if (isBegin)
         {
             if (curveType === qc.CURVE_TYPE_RELATIVE ||
                 curveType === qc.CURVE_TYPE_TWEEN_RELATIVE)
-                prop.from = target[attrib];
+            {
+                if (prop.attribArray)
+                {
+                    var len = prop.attribArray.length;
+                    if (len === 2)
+                        targetValue = target[prop.attribArray[0]] ? target[prop.attribArray[0]][prop.attribArray[1]] : null;
+                    else if (len > 2)
+                    {
+                        var o = target;
+                        for (var i = 0; i < len - 1; i++)
+                        {
+                            o = o[prop.attribArray[i]];
+                            if (!o)
+                                break;
+                        }
+                        if (o)
+                            targetValue = o[prop.attribArray[len - 1]];
+                    }
+                }
+                else
+                    targetValue = target[attrib];
+                prop.from = targetValue;
+            }
         }
         var from = this.getFromValue(target, attrib, elapsedTime);
         var to = prop.to;
@@ -314,12 +367,32 @@ CurveProp.prototype.update = function(target, elapsedTime, isBegin, forceUpdate)
 
         // 设置属性值
         if (curveType === qc.CURVE_TYPE_ABSOLUTE)
-            target[attrib] = value;
+            targetValue = value;
         else if (curveType === qc.CURVE_TYPE_RELATIVE)
-            target[attrib] = from + value;
+            targetValue = from + value;
         else if (curveType === qc.CURVE_TYPE_TWEEN_ABSOLUTE)
-            target[attrib] = from + value * (to - from);
+            targetValue = from + value * (to - from);
         else
-            target[attrib] = from + value * to;
+            targetValue = from + value * to;
+        if (prop.attribArray)
+        {
+            var len = prop.attribArray.length;
+            if (len === 2 && target[prop.attribArray[0]])
+                target[prop.attribArray[0]][prop.attribArray[1]] = targetValue;
+            else if (len > 2)
+            {
+                var o = target;
+                for (var i = 0; i < len - 1; i++)
+                {
+                    o = o[prop.attribArray[i]];
+                    if (!o)
+                        break;
+                }
+                if (o)
+                    o[prop.attribArray[len - 1]] = targetValue;
+            }
+        }
+        else
+            target[attrib] = targetValue;
     }
 }

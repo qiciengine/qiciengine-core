@@ -41,6 +41,30 @@ LinearProp.prototype.getValue = function(attrib, time) {
     return prop[1][prop[1].length - 1][1];
 }
 
+// 更新目标对象属性值
+LinearProp.prototype.updateAttrib = function(target, attrib, value, attribArray) {
+    if (!attribArray)
+        target[attrib] = value;
+    else
+    {
+        var len = attribArray.length;
+        if (len === 2 && target[attribArray[0]])
+            target[attribArray[0]][attribArray[1]] = value;
+        else if (len > 2)
+        {
+            var o = target;
+            for (var i = 0; i < len - 1; i++)
+            {
+                o = o[attribArray[i]];
+                if (!o)
+                    break;
+            }
+            if (o)
+                o[attribArray[len - 1]] = value;
+        }
+    }
+}
+
 // 帧调度
 LinearProp.prototype.update = function(target, elapsedTime, isBegin, inEditor, forceUpdate) {
     if (isBegin)
@@ -69,7 +93,7 @@ LinearProp.prototype.update = function(target, elapsedTime, isBegin, inEditor, f
                     // 最后一帧
                     if (i !== keyIndex)
                     {
-                        target[attrib] = prop[1][i][1];
+                        this.updateAttrib(target, attrib, prop[1][i][1], prop[2]);
                         this.keyIndexMap[attrib] = i;
                     }
                 }
@@ -80,7 +104,7 @@ LinearProp.prototype.update = function(target, elapsedTime, isBegin, inEditor, f
                     if (prop[1][i][1] && prop[1][i+1][1])
                     {
                         var value = this.calcValue(prop[1][i][1], prop[1][i+1][1], factor);
-                        target[attrib] = value;
+                        this.updateAttrib(target, attrib, value, prop[2]);
                     }
                     this.keyIndexMap[attrib] = i;
                     break;
@@ -105,7 +129,7 @@ LinearProp.prototype.update = function(target, elapsedTime, isBegin, inEditor, f
                     if (prop[1][i][1] && prop[1][i+1][1])
                     {
                         var value = this.calcValue(prop[1][i][1], prop[1][i+1][1], factor);
-                        target[attrib] = value;
+                        this.updateAttrib(target, attrib, value, prop[2]);
                     }
                     this.keyIndexMap[attrib] = i;
                     break;

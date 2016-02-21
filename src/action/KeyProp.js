@@ -30,11 +30,19 @@ KeyProp.prototype.fromJson = function(propertyInfo, json) {
     for (var i = 0; i < properties.length; i++)
     {
         var attrib = properties[i].attrib;
+        var attribArray;
+        if (typeof(attrib) === 'string')
+        {
+            // 属性可能为 'Component.Attrib' 格式
+            var arr = attrib.split('.');
+            if (arr.length > 1)
+                attribArray = arr;
+        }
         this.propDefaultValue[attrib] = properties[i].default;
         if (!json)
         {
             // 新增 property 的情况
-            this.propMap[attrib] = [ properties[i].type, [] ];
+            this.propMap[attrib] = [ properties[i].type, [], attribArray ];
             continue;
         }
 
@@ -42,14 +50,14 @@ KeyProp.prototype.fromJson = function(propertyInfo, json) {
         var data = json[i];
         if (!data)
         {
-            this.propMap[attrib] = [ properties[i].type, [] ];
+            this.propMap[attrib] = [ properties[i].type, [], attribArray ];
             continue;
         }
         var type = data[0], list = data[1];
         var propData = [];
         for (var j = 0; j < list.length; j++)
             propData.push([list[j][0], this.restoreValue(type, list[j][1])]);
-        this.propMap[attrib] = [type, propData];
+        this.propMap[attrib] = [type, propData, attribArray];
         if (propData.length > 0)
         {
             var time = propData[propData.length - 1][0];
@@ -207,8 +215,27 @@ KeyProp.prototype.getValueByIndex = function(attrib, keyIndex) {
 }
 
 // 更新目标对象属性值
-KeyProp.prototype.updateAttrib = function(target, attrib, value) {
-    target[attrib] = value;
+KeyProp.prototype.updateAttrib = function(target, attrib, value, attribArray) {
+    if (!attribArray)
+        target[attrib] = value;
+    else
+    {
+        var len = attribArray.length;
+        if (len === 2 && target[attribArray[0]])
+            target[attribArray[0]][attribArray[1]] = value;
+        else if (len > 2)
+        {
+            var o = target;
+            for (var i = 0; i < len - 1; i++)
+            {
+                o = o[attribArray[i]];
+                if (!o)
+                    break;
+            }
+            if (o)
+                o[attribArray[len - 1]] = value;
+        }
+    }
 }
 
 // 帧调度
@@ -237,7 +264,7 @@ KeyProp.prototype.update = function(target, elapsedTime, isBegin, inEditor, forc
                 if (prop[1][i][0] <= elapsedTime)
                 {
                     // 达到该关键帧的时间，设置属性
-                    this.updateAttrib(target, attrib, prop[1][i][1]);
+                    this.updateAttrib(target, attrib, prop[1][i][1], prop[2]);
                     this.keyIndexMap[attrib] = i + 1;
                     continue;
                 }
@@ -263,7 +290,7 @@ KeyProp.prototype.update = function(target, elapsedTime, isBegin, inEditor, forc
                 flag = true;
                 if (i !== keyIndex - 1 || (inEditor && (forceUpdate || this.forceUpdate)))
                 {
-                    this.updateAttrib(target, attrib, prop[1][i][1]);
+                    this.updateAttrib(target, attrib, prop[1][i][1], prop[2]);
                     this.keyIndexMap[attrib] = i + 1;
                 }
                 break;

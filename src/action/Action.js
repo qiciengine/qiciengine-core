@@ -159,11 +159,16 @@ Action.prototype.addProperty = function(path, propertyId, propList, refresh) {
     var propertyOb = this.propertyList[key];
     if (propertyOb)
     {
-        this.game.log.important('Action\'s has duplicate key : {0} in addProperty', key);
+        this.game.log.important('Action has duplicate key : {0} in addProperty', key);
         return;
     }
 
     var propertyInfo = qc.ActionProperties[propertyId];
+    if (!propertyInfo)
+    {
+        this.game.log.important('Can\'t find propertyId : {0} in addProperty', propertyId);
+        return;
+    }
     var clazz = qc.Util.findClass(propertyInfo.class);
     propertyOb = new clazz(this, path, propertyId);
     var duration = propertyOb.fromJson(propertyInfo, propList);
