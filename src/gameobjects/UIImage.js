@@ -60,7 +60,7 @@ Object.defineProperties(UIImage.prototype, {
                 self.phaser.loadTexture(null, self.frame);
                 return;
             }
-            
+
             if (value instanceof qc.Atlas) {
                 value = value.getTexture(this.frame);
             }
@@ -336,6 +336,8 @@ UIImage.prototype.getMeta = function() {
     json.texture = s.TEXTURE;
     json.frame = s.AUTO;
     json.imageType = s.NUMBER;
+    json.skewX = s.NUMBER;
+    json.skewY = s.NUMBER;
     return json;
 };
 
