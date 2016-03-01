@@ -59,7 +59,7 @@ Tilemap.prototype.generateLayers = function(callback) {
             // 保存图集数组
             var assetArray = [];
             for (var i = 0; i<items.length; i++) {
-                assetArray.push(items[i].asset);
+                assetArray.push(new qc.Texture(items[i].asset));
             }
             self.tilesets = assetArray;
 
