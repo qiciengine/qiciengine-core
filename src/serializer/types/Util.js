@@ -87,7 +87,7 @@ Serializer.prototype.newNode = function(clazz, parent, uuid) {
         // 尝试查找自定义构造方法，通常用于用户扩展的Node
         var method = Serializer.customDeserializers[clazz];
         if (method)
-            return method(parent, uuid);
+            return method(this.game, parent, uuid);
         else
             throw new Error('unsupported class:' + clazz);
     }
