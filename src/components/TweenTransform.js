@@ -30,7 +30,7 @@ TweenTransform.__menu = 'Tween/TweenTransform';
 TweenTransform.prototype.awake = function() {
     var self = this;
 
-    if (self.from === undefined || self.to === undefined)
+    if (!self.from || !self.to)
         return;
 
     var worldFrom = self.from.getWorldPosition();
