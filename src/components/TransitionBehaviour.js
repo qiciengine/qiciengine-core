@@ -19,9 +19,39 @@ var TransitionBehaviour = qc.defineBehaviour('qc.TransitionBehaviour', qc.Behavi
 {
     target : qc.Serializer.NODE,
     _transition : qc.Serializer.NUMBER,
-    _normalTexture : qc.Serializer.TEXTURE,
-    _pressedTexture : qc.Serializer.TEXTURE,
-    _disabledTexture : qc.Serializer.TEXTURE,
+    _normalTexture : {
+        get: function(ob, context) { return ob._normalTexture; },
+        set: function(context, v) {
+            if (typeof v === 'string') {
+                // 兼容旧版本
+                if (context.gameObject.texture) v = context.gameObject.texture.atlas.getTexture(v);
+                else v = null;
+            }
+            if (v instanceof qc.Texture) this._normalTexture = v;
+        }
+    },
+    _pressedTexture : {
+        get: function(ob, context) { return ob._pressedTexture; },
+        set: function(context, v) {
+            if (typeof v === 'string') {
+                // 兼容旧版本
+                if (context.gameObject.texture) v = context.gameObject.texture.atlas.getTexture(v);
+                else v = null;
+            }
+            if (v instanceof qc.Texture) this._pressedTexture = v;
+        }
+    },
+    _disabledTexture : {
+        get: function(ob, context) { return ob._disabledTexture; },
+        set: function(context, v) {
+            if (typeof v === 'string') {
+                // 兼容旧版本
+                if (context.gameObject.texture) v = context.gameObject.texture.atlas.getTexture(v);
+                else v = null;
+            }
+            if (v instanceof qc.Texture) this._disabledTexture = v;
+        }
+    },
     _normalColor : qc.Serializer.COLOR,
     _pressedColor : qc.Serializer.COLOR,
     _disabledColor : qc.Serializer.COLOR
@@ -201,19 +231,10 @@ TransitionBehaviour.prototype._disabledColor = Color.grey;
  */
 TransitionBehaviour.prototype.awake = function() {
     // 关注状态变更的事件
-    this.gameObject.onStateChange.add(this._reset, this);
+    this.addListener(this.gameObject.onStateChange, this._reset, this);
 
     // 立刻重新绘制下
     this._reset();
-};
-
-/**
- * @method onDestroy
- * @internal
- */
-TransitionBehaviour.prototype.onDestroy = function() {
-    // 删除状态监听
-    this.gameObject.onStateChange.remove(this._reset, this);
 };
 
 /**

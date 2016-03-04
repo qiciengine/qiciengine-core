@@ -64,6 +64,17 @@ Object.defineProperties(UIImage.prototype, {
             if (value instanceof qc.Atlas) {
                 value = value.getTexture(this.frame);
             }
+            else if (typeof value === 'string') {
+                // 兼容旧版本的数据
+                if (self._atlas) {
+                    value = self._atlas.getTexture(value);
+                    if (!value) {
+                        return;
+                    }
+                }
+                else 
+                    return;
+            }
             if (self._atlas === value.atlas && self.frame === value.frame) return;
             self._atlas = value.atlas;
 
