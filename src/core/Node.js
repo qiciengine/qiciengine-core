@@ -177,8 +177,15 @@ Object.defineProperties(Node.prototype, {
      * @property {boolean} ignoreDestroy - 节点及其孩子在切换场景时不会被析构
      */
     ignoreDestroy: {
-        get: function()  { return this.phaser.ignoreDestroy; },
-        set: function(v) { this.phaser.ignoreDestroy = v;    }
+        get: function()  { return this.parent === this.game.world && this.phaser.ignoreDestroy; },
+        set: function(v) {
+            if (this.parent === this.game.world)
+                this.phaser.ignoreDestroy = v;
+            else {
+                this.phaser.ignoreDestroy = false;
+                if (v) this.game.log.error('Only Root Node can set: ignoreDestroy=true');
+            }
+        }
     },
 
     /**
@@ -696,8 +703,9 @@ Node.prototype.onDestroy = function() {
     // 通知父亲移除
     this.parent = null;
 
-    // 通知physer析构
+    // 通知phaser析构
     this.game.nodePool.remove(this.uuid);
+    
 };
 
 /**
