@@ -182,6 +182,8 @@ PIXI.Text.prototype.getBounds = function(matrix) {
     }
     var canvasDownScale = this._canvasDownScale;
     var wt = this.worldTransform;
+    wt.tx = wt.tx || 0;
+    wt.ty = wt.ty || 0;
     var a = wt.a;
     var b = wt.b;
     var c = wt.c;
