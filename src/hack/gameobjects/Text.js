@@ -175,6 +175,37 @@ var createFunc = function(baseRenderFunc){
     };
 };
 
+PIXI.Text.prototype.getBounds = function(matrix) {
+    if (this.dirty) {
+        this.updateText();
+        this.dirty = false;
+    }
+    var canvasDownScale = this._canvasDownScale;
+    var wt = this.worldTransform;
+    wt.tx = wt.tx || 0;
+    wt.ty = wt.ty || 0;
+    var a = wt.a;
+    var b = wt.b;
+    var c = wt.c;
+    var d = wt.d;
+    var x = canvasDownScale.x;
+    var y = canvasDownScale.y;
+    wt.a *= x;
+    wt.b *= x;
+    wt.c *= y;
+    wt.d *= y;
+
+    // 调用原始实现
+    var result = PIXI.Sprite.prototype.getBounds.call(this, matrix);
+
+    wt.a = a;
+    wt.b = b;
+    wt.c = c;
+    wt.d = d;
+
+    return result;
+}
+
 // hack phaser 绘制 text 逻辑
 PIXI.Text.prototype._renderCanvas = (function(){ return createFunc(oldRenderCanvas); })();
 PIXI.Text.prototype._renderWebGL = (function(){ return createFunc(oldRenderWebGL); })();

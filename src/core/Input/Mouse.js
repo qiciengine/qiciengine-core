@@ -308,7 +308,7 @@ Mouse.prototype._setEnable = function(value) {
     if (this._enable === value) {
         return;
     }
-    if (this.game.phaser.device.android && this.game.phaser.device.chrome === false) {
+    if (this.game.phaser.device.android && this.game.phaser.device.chrome === false && this.game.phaser.device.touch) {
         // 安卓设备下，部分浏览器即使在touchStart中preventDefault也会触发鼠标事件，在这里进行屏蔽，不监听相关事件
         return;
     }

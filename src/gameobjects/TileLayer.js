@@ -420,7 +420,7 @@ TileLayer.prototype._drawTile = function(context, phaserMap, phaserTile, x, y) {
         var ts = this.tilemap.tilesets;
         if (ts) {
             for (var i=0; i<ts.length; i++) {
-                if (ts[i].url === url) {
+                if (ts[i].atlas.url === url) {
                     asset = ts[i];
                     break;
                 }
@@ -434,7 +434,7 @@ TileLayer.prototype._drawTile = function(context, phaserMap, phaserTile, x, y) {
     }
     if (asset) {
         context.drawImage(
-            asset.img,
+            asset.atlas.img,
             tile[0],
             tile[1],
             tileset.tileWidth,

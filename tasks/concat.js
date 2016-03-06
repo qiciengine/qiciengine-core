@@ -27,6 +27,7 @@ module.exports = function (grunt) {
             'src/loader/AssetUtil.js',
             'src/loader/Assets.js',
             'src/loader/Atlas.js',
+            'src/loader/Texture.js',
             'src/loader/Prefab.js',
             'src/loader/Font.js',
             'src/loader/SoundAsset.js',
@@ -126,6 +127,7 @@ module.exports = function (grunt) {
             'src/gameobjects/ObjectLayer.js',
             'src/gameobjects/Dom.js',
             'src/gameobjects/Graphics.js',
+            'src/gameobjects/Dropdown.js',
 
             'src/components/Bounds.js',
             'src/components/LayoutElement.js',

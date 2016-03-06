@@ -13,6 +13,7 @@
 var NodePool = qc.NodePool = function(game) {
     this._game = game;
     this._nodes = {};
+    this._nameUuidMap = {};
 }
 NodePool.prototype = {};
 NodePool.prototype.constructor = NodePool;
@@ -36,6 +37,8 @@ NodePool.prototype.add = function(uuid, node) {
         this.game.log.error('uuid {0} already exists', uuid);
     }
     this._nodes[uuid] = node;
+    if (node.uniqueName && !this._nameUuidMap[node.uniqueName])
+        this._nameUuidMap[node.uniqueName] = uuid;
 }
 
 /**
@@ -44,7 +47,11 @@ NodePool.prototype.add = function(uuid, node) {
  */
 NodePool.prototype.remove = function(uuid) {
     if (this._nodes[uuid])
+    {
+        if (this._nodes[uuid].uniqueName)
+            delete this._nameUuidMap[this._nodes[uuid].uniqueName];
         delete this._nodes[uuid];
+    }
 }
 
 /**
@@ -54,4 +61,30 @@ NodePool.prototype.remove = function(uuid) {
 NodePool.prototype.find = function(uuid) {
     if (this._nodes[uuid])
         return this._nodes[uuid];
+}
+
+/**
+ * 根据唯一名字查找对象
+ * @method qc.NodePool#findByName
+ */
+NodePool.prototype.findByName = function(uniqueName) {
+    var uuid = this._nameUuidMap[uniqueName];
+    if (uuid)
+        return this._nodes[uuid];
+}
+
+/**
+ * 移除 name 与 uuid 的映射
+ * @method qc.NodePool#removeName
+ */
+NodePool.prototype.removeName = function(uniqueName) {
+    delete this._nameUuidMap[uniqueName];
+}
+
+/**
+ * 增加 name 与 uuid 的映射
+ * @method qc.NodePool#addName
+ */
+NodePool.prototype.addName = function(uniqueName, uuid) {
+    this._nameUuidMap[uniqueName] = uuid;
 }

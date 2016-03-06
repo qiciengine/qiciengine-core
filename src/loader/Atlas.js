@@ -100,6 +100,14 @@ Object.defineProperties(Atlas.prototype, {
      */
     uuid : {
         get : function() { return this.meta.uuid; }
+    },
+
+    /**
+     * @property {string} class - 类的名字
+     * @internal
+     */
+    class : {
+        get : function() { return 'qc.Atlas'; }
     }
 });
 
@@ -113,6 +121,15 @@ Atlas.prototype.getFrame = function(frame) {
     if (typeof frame === 'number')
         return this._data.frameData.getFrame(frame);
     return this._data.frameData.getFrameByName(frame);
+};
+
+/**
+ * Get the texture from atlas
+ * @method qc.Atlas#getTexture
+ * @param frame {string|number} - The name or index of the texture
+ */
+Atlas.prototype.getTexture = function(frame) {
+    return new qc.Texture(this, frame);
 };
 
 /**

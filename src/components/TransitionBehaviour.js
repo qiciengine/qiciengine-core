@@ -19,9 +19,39 @@ var TransitionBehaviour = qc.defineBehaviour('qc.TransitionBehaviour', qc.Behavi
 {
     target : qc.Serializer.NODE,
     _transition : qc.Serializer.NUMBER,
-    _normalTexture : qc.Serializer.AUTO,
-    _pressedTexture : qc.Serializer.AUTO,
-    _disabledTexture : qc.Serializer.AUTO,
+    _normalTexture : {
+        get: function(ob, context) { return ob._normalTexture; },
+        set: function(context, v) {
+            if (typeof v === 'string') {
+                // 兼容旧版本
+                if (context.gameObject.texture) v = context.gameObject.texture.atlas.getTexture(v);
+                else v = null;
+            }
+            if (v instanceof qc.Texture) this._normalTexture = v;
+        }
+    },
+    _pressedTexture : {
+        get: function(ob, context) { return ob._pressedTexture; },
+        set: function(context, v) {
+            if (typeof v === 'string') {
+                // 兼容旧版本
+                if (context.gameObject.texture) v = context.gameObject.texture.atlas.getTexture(v);
+                else v = null;
+            }
+            if (v instanceof qc.Texture) this._pressedTexture = v;
+        }
+    },
+    _disabledTexture : {
+        get: function(ob, context) { return ob._disabledTexture; },
+        set: function(context, v) {
+            if (typeof v === 'string') {
+                // 兼容旧版本
+                if (context.gameObject.texture) v = context.gameObject.texture.atlas.getTexture(v);
+                else v = null;
+            }
+            if (v instanceof qc.Texture) this._disabledTexture = v;
+        }
+    },
     _normalColor : qc.Serializer.COLOR,
     _pressedColor : qc.Serializer.COLOR,
     _disabledColor : qc.Serializer.COLOR
@@ -71,7 +101,7 @@ Object.defineProperties(TransitionBehaviour.prototype, {
             // 如果当前处于普通状态，则更新下贴图
             if (this.gameObject.state === qc.UIState.NORMAL &&
                 this.transition === qc.Transition.TEXTURE_SWAP)
-                this.target.frame = this.normalTexture;
+                this.target.texture = this.normalTexture;
         }
     },
 
@@ -88,7 +118,7 @@ Object.defineProperties(TransitionBehaviour.prototype, {
             //  如果当前处于按下状态，则更新下贴图
             if (this.gameObject.state === qc.UIState.PRESSED &&
                 this.transition === qc.Transition.TEXTURE_SWAP)
-                this.target.frame = this.pressedTexture;
+                this.target.texture = this.pressedTexture;
         }
     },
 
@@ -105,7 +135,7 @@ Object.defineProperties(TransitionBehaviour.prototype, {
             //  如果当前处于置灰状态，则更新下贴图
             if (this.gameObject.state === qc.UIState.DISABLED &&
                 this.transition === qc.Transition.TEXTURE_SWAP)
-                this.target.frame = this.disabledTexture;
+                this.target.texture = this.disabledTexture;
         }
     },
 
@@ -187,15 +217,6 @@ Object.defineProperties(TransitionBehaviour.prototype, {
     }
 });
 
-// 默认普通状态的贴图
-TransitionBehaviour.prototype._normalTexture = '';
-
-// 默认按下状态的贴图
-TransitionBehaviour.prototype._pressedTexture = '';
-
-// 默认无效状态的贴图
-TransitionBehaviour.prototype._disabledTexture = '';
-
 // 默认正常混合色
 TransitionBehaviour.prototype._normalColor = Color.white;
 
@@ -210,19 +231,10 @@ TransitionBehaviour.prototype._disabledColor = Color.grey;
  */
 TransitionBehaviour.prototype.awake = function() {
     // 关注状态变更的事件
-    this.gameObject.onStateChange.add(this._reset, this);
+    this.addListener(this.gameObject.onStateChange, this._reset, this);
 
     // 立刻重新绘制下
     this._reset();
-};
-
-/**
- * @method onDestroy
- * @internal
- */
-TransitionBehaviour.prototype.onDestroy = function() {
-    // 删除状态监听
-    this.gameObject.onStateChange.remove(this._reset, this);
 };
 
 /**
@@ -242,15 +254,15 @@ TransitionBehaviour.prototype._reset = function() {
         switch (this.gameObject.state) {
         case qc.UIState.NORMAL:
             if (this.normalTexture)
-                this.target.frame = this.normalTexture;
+                this.target.texture = this.normalTexture;
             break;
         case qc.UIState.PRESSED:
             if (this.pressedTexture)
-                this.target.frame = this.pressedTexture;
+                this.target.texture = this.pressedTexture;
             break;
         case qc.UIState.DISABLED:
             if (this.disabledTexture)
-                this.target.frame = this.disabledTexture;
+                this.target.texture = this.disabledTexture;
             break;
         }
         break;

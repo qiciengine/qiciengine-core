@@ -20,6 +20,9 @@ var SoundManager = qc.SoundManager = function(game) {
     game.onStart.add(function() {
         self._boot();
     });
+
+    // 由编辑器生成的 sound duration 数据
+    this._soundDurationMap = window.soundDurationMap || {};
 };
 SoundManager.prototype.constructor = SoundManager;
 
@@ -113,6 +116,16 @@ Object.defineProperties(SoundManager.prototype, {
         }
     }
 });
+
+/**
+ * 获取声音对应的声音长度
+ */
+SoundManager.prototype._getAudioTagDurationInConfig = function(soundPhaser) {
+    var url = soundPhaser.key;
+    if (!/\.bin$/i.test(url))
+        url = url + '.bin';
+    return this._soundDurationMap[url] || soundPhaser._sound.duration;
+};
 
 /**
  * 获取声音文件对应的浏览器支持格式的 url

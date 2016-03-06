@@ -548,98 +548,98 @@ ProgressBar.prototype._updateSliders = function() {
     }
     if (!this.clipSliders || !mask) {
         switch (this.style) {
-            case ProgressBar.STYLE_HORIZONTAL:
-            case ProgressBar.STYLE_VERTICAL:
-                // 滑动时的实际区域为 1 + this.fixedSize
-                var minAnchor = new qc.Point(0, 0);
-                var maxAnchor = new qc.Point(1, 1);
-                var axisPos = this._axisPos;
-                if (this.fixedSize >= 0) {
-                    if (this._canSlideOut) {
-                        value *= 1 + this.fixedSize;
-                        // fixedSize模式下，没有SHOW_REMAINED模式
-                        maxAnchor[axisPos] = Math.min(1, value);
-                        minAnchor[axisPos] = Math.max(0, value - this.fixedSize - 0.00001);
-                    }
-                    else {
-                        value *= 1 - this.fixedSize;
-                        minAnchor[axisPos] = Math.max(0, value);
-                        maxAnchor[axisPos] = Math.min(1, value + this.fixedSize + 0.00001);
-                    }
+        case ProgressBar.STYLE_HORIZONTAL:
+        case ProgressBar.STYLE_VERTICAL:
+            // 滑动时的实际区域为 1 + this.fixedSize
+            var minAnchor = new qc.Point(0, 0);
+            var maxAnchor = new qc.Point(1, 1);
+            var axisPos = this._axisPos;
+            if (this.fixedSize >= 0) {
+                if (this._canSlideOut) {
+                    value *= 1 + this.fixedSize;
+                    // fixedSize模式下，没有SHOW_REMAINED模式
+                    maxAnchor[axisPos] = Math.min(1, value);
+                    minAnchor[axisPos] = Math.max(0, value - this.fixedSize - 0.00001);
                 }
                 else {
-                    if (this.showMode === ProgressBar.SHOW_PROCESSED) {
-                        maxAnchor[axisPos] = Math.max(0.00001, Math.min(1, value));
-                    }
-                    else {
-                        minAnchor[axisPos] = Math.min(1 - 0.00001, value);
-                    }
+                    value *= 1 - this.fixedSize;
+                    minAnchor[axisPos] = Math.max(0, value);
+                    maxAnchor[axisPos] = Math.min(1, value + this.fixedSize + 0.00001);
                 }
-                this.sliders.setAnchor(minAnchor, maxAnchor, false);
+            }
+            else {
+                if (this.showMode === ProgressBar.SHOW_PROCESSED) {
+                    maxAnchor[axisPos] = Math.max(0.00001, Math.min(1, value));
+                }
+                else {
+                    minAnchor[axisPos] = Math.min(1 - 0.00001, value);
+                }
+            }
+            this.sliders.setAnchor(minAnchor, maxAnchor, false);
 
-                break;
-            case ProgressBar.STYLE_CIRCLE:
-                // 滚动
-                // 滑动模式下，没有SHOW_REMAINED模式
-                this.sliders.rotation = value * this.showRadian + this.startRadian;
-                break;
+            break;
+        case ProgressBar.STYLE_CIRCLE:
+            // 滚动
+            // 滑动模式下，没有SHOW_REMAINED模式
+            this.sliders.rotation = value * this.showRadian + this.startRadian;
+            break;
         }
     }
     else {
         switch (this.style) {
-            case ProgressBar.STYLE_HORIZONTAL:
-            case ProgressBar.STYLE_VERTICAL:
-                // 滑动
-                var minAnchor = new qc.Point(0, 0);
-                var maxAnchor = new qc.Point(1, 1);
-                var axisPos = this._axisPos;
-                if (this.fixedSize >= 0) {
-                    if (this._canSlideOut) {
-                        value *= 1 + this.fixedSize;
-                        // fixedSize模式下，没有SHOW_REMAINED模式
-                        maxAnchor[axisPos] = Math.min(1, value);
-                        minAnchor[axisPos] = Math.max(0, value - this.fixedSize - 0.00001);
-                    }
-                    else {
-                        value *= 1 - this.fixedSize;
-                        minAnchor[axisPos] = Math.max(0, value);
-                        maxAnchor[axisPos] = Math.min(1, value + this.fixedSize + 0.00001);
-                    }
+        case ProgressBar.STYLE_HORIZONTAL:
+        case ProgressBar.STYLE_VERTICAL:
+            // 滑动
+            var minAnchor = new qc.Point(0, 0);
+            var maxAnchor = new qc.Point(1, 1);
+            var axisPos = this._axisPos;
+            if (this.fixedSize >= 0) {
+                if (this._canSlideOut) {
+                    value *= 1 + this.fixedSize;
+                    // fixedSize模式下，没有SHOW_REMAINED模式
+                    maxAnchor[axisPos] = Math.min(1, value);
+                    minAnchor[axisPos] = Math.max(0, value - this.fixedSize - 0.00001);
                 }
                 else {
-                    if (this.showMode === ProgressBar.SHOW_PROCESSED) {
-                        maxAnchor[axisPos] = Math.min(1, value);
-                    }
-                    else {
-                        minAnchor[axisPos] = Math.min(1, value);
-                    }
+                    value *= 1 - this.fixedSize;
+                    minAnchor[axisPos] = Math.max(0, value);
+                    maxAnchor[axisPos] = Math.min(1, value + this.fixedSize + 0.00001);
                 }
-                mask.setMask(minAnchor, maxAnchor);
-                break;
-            case ProgressBar.STYLE_CIRCLE:
-                // 滚动
-                if (this.fixedSize >= 0) {
-                    var minRotation = this.startRadian + (value - this.fixedSize) * this.showRadian ;
-                    var maxRotation = this.startRadian + value * this.showRadian;
-                    if (this.showMode === ProgressBar.SHOW_REMAINED && this.showRadian === Math.PI * 2) {
-                        var tempMin = maxRotation;
-                        maxRotation = minRotation + Math.PI * 2;
-                        minRotation = tempMin;
-                    }
-                    mask.setMask(null, null, minRotation, maxRotation);
+            }
+            else {
+                if (this.showMode === ProgressBar.SHOW_PROCESSED) {
+                    maxAnchor[axisPos] = Math.min(1, value);
                 }
                 else {
-                    var minRotation = -Math.PI / 2 + this.startRadian;
-                    var maxRotation = -Math.PI / 2 + this.endRadian;
-                    if (this.showMode === ProgressBar.SHOW_PROCESSED) {
-                        maxRotation = minRotation + value * this.showRadian;
-                    }
-                    else {
-                        minRotation = minRotation + value * this.showRadian;
-                    }
-                    mask.setMask(null, null, minRotation, maxRotation);
+                    minAnchor[axisPos] = Math.min(1, value);
                 }
-                break;
+            }
+            mask.setMask(minAnchor, maxAnchor);
+            break;
+        case ProgressBar.STYLE_CIRCLE:
+            // 滚动
+            if (this.fixedSize >= 0) {
+                var minRotation = this.startRadian + (value - this.fixedSize) * this.showRadian ;
+                var maxRotation = this.startRadian + value * this.showRadian;
+                if (this.showMode === ProgressBar.SHOW_REMAINED && this.showRadian === Math.PI * 2) {
+                    var tempMin = maxRotation;
+                    maxRotation = minRotation + Math.PI * 2;
+                    minRotation = tempMin;
+                }
+                mask.setMask(null, null, minRotation, maxRotation);
+            }
+            else {
+                var minRotation = -Math.PI / 2 + this.startRadian;
+                var maxRotation = -Math.PI / 2 + this.endRadian;
+                if (this.showMode === ProgressBar.SHOW_PROCESSED) {
+                    maxRotation = minRotation + value * this.showRadian;
+                }
+                else {
+                    minRotation = minRotation + value * this.showRadian;
+                }
+                mask.setMask(null, null, minRotation, maxRotation);
+            }
+            break;
         }
     }
 };

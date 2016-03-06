@@ -52,15 +52,17 @@ Object.defineProperties(Animator.prototype, {
 
                 // 还原出 action 或 actionManager 对象
                 if (asset instanceof qc.ActionManagerAsset)
-                    this.animatorList[i] = qc.ActionManager.restoreBundle(asset, this.gameObject.game);
+                    this.animatorList[i] = qc.ActionManager.restoreBundle(asset, this.game, !this.game.serializer.isRestoring);
                 else if (asset instanceof qc.ActionAsset)
-                    this.animatorList[i] = qc.Action.restoreBundle(asset, this.gameObject.game);
+                    this.animatorList[i] = qc.Action.restoreBundle(asset, this.game, !this.game.serializer.isRestoring);
 
                 if (!this.animatorList[i].targetLocked)
                     // 对象不锁定目标，则将脚本挂载对象作为 animator 的目标对象
                     this.animatorList[i].targetObject = this.gameObject;
 
                 var name = this.animatorList[i].name;
+                if (this.animatorMap[name])
+                    this.gameObject.game.log.error('Exist duplicate action\'s name: {0}', name);
                 this.animatorMap[name] = this.animatorList[i];
             }
         }
@@ -74,7 +76,8 @@ Animator.prototype.awake = function() {
         return;
 
     for (var i = 0; i < this.animatorList.length; i++)
-        this.animatorList[i].awake();
+        if (this.animatorList[i])
+            this.animatorList[i].awake();
 };
 
 // 帧调度

@@ -45,54 +45,63 @@ UIImage.IMAGE_TYPE_TILED = 2;
 
 Object.defineProperties(UIImage.prototype, {
     /**
-     *  获取or设置当前的图片
-     *  @property {qc.Atlas} texture
+     * 获取or设置当前的图片
+     * @property {qc.Texture} texture
      */
     texture : {
         get : function() {
-            return this._texture;
+            if (!this._atlas) return null;
+            return new qc.Texture(this._atlas, this.frame);
         },
         set : function(value) {
+            var self = this;
             if (!value) {
-                this._texture = null;
-                this.phaser.loadTexture(null, this.frame);
+                self._atlas = null;
+                self.phaser.loadTexture(null, self.frame);
                 return;
             }
-            if (this._texture === value) return;
-            this._texture = value;
+
+            if (value instanceof qc.Atlas) {
+                value = value.getTexture(this.frame);
+            }
+            else if (typeof value === 'string') {
+                // 兼容旧版本的数据
+                if (self._atlas) {
+                    value = self._atlas.getTexture(value);
+                    if (!value) {
+                        return;
+                    }
+                }
+                else 
+                    return;
+            }
+            if (self._atlas === value.atlas && self.frame === value.frame) return;
+            self._atlas = value.atlas;
 
             // 如果frame不存在，则使用第一帧
-            var frame = this.frame;
-            if (!value.getFrame(this.frame)) frame = 0;
+            if (!value.atlas.getFrame(value.frame)) value.frame = 0;
 
             // 载入图片(通过设置frame来起效)
-            this.phaser.key = value.key;
-            this.frame = frame;
-
-            this._dispatchLayoutArgumentChanged('size');
-            this.phaser.displayChanged(qc.DisplayChangeStatus.TEXTURE);
-            if (this._onTextureChanged) {
-                this._onTextureChanged.dispatch();
-            }
+            self.phaser.key = value.atlas.key;
+            self.frame = value.frame;
         }
     },
 
     /**
-     *  获取or设置当前的图片帧，一般是图集才会用到该属性（可以为数字或别名）
-     *  @property {int|string} frame
+     * 获取or设置当前的图片帧，一般是图集才会用到该属性（可以为数字或别名）
+     * @property {int|string} frame
      */
     frame : {
         get: function () {
-            if (!this.texture) return null;
             return this.phaser.frameName;
         },
 
         set: function (value) {
             if (!this.texture) return;
-            var frameNames = this.texture.frameNames || [0];
+            var frameNames = this.texture.atlas.frameNames || [0];
             if (typeof(value) === 'string' && frameNames.indexOf(value) === -1)
                 return;
-            this.phaser.loadTexture(this.texture.key, value);
+            this.phaser.loadTexture(this.texture.atlas.key, value);
             this.setWidth(this.width);
             this.setHeight(this.height);
 
@@ -317,10 +326,8 @@ UIImage.prototype.setHeight = function(h) {
  * @private
  */
 UIImage.prototype._resetNinePadding = function() {
-    var atlas = this.texture;
-    if (!atlas) return;
-
-    var padding = atlas.getPadding(this.frame);
+    if (!this.texture) return;
+    var padding = this.texture.padding;
     this._borderLeft = padding[0];
     this._borderTop = padding[1];
     this._borderRight = padding[2];
@@ -340,6 +347,8 @@ UIImage.prototype.getMeta = function() {
     json.texture = s.TEXTURE;
     json.frame = s.AUTO;
     json.imageType = s.NUMBER;
+    json.skewX = s.NUMBER;
+    json.skewY = s.NUMBER;
     return json;
 };
 

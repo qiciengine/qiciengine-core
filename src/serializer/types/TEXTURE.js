@@ -22,14 +22,15 @@ Serializer.prototype.restoreTexture = function(ob, json, key, value) {
  * @private
  */
 Serializer.prototype._saveTextureItem = function(value, context) {
-    if (!(value instanceof qc.Atlas)) return null;
+    if (!(value instanceof qc.Texture)) return null;
 
     // 记录资源依赖
+    var atlas = value.atlas;
     context.dependences.push({
-        key : value.key,
-        uuid : value.uuid
+        key : atlas.key,
+        uuid : atlas.uuid
     });
-    return [Serializer.TEXTURE, value.key, value.uuid];
+    return [Serializer.TEXTURE, atlas.key, atlas.uuid, value.frame];
 }
 
 /**
@@ -48,5 +49,5 @@ Serializer.prototype._restoreTextureItem = function(value) {
     }
     if (!(atlas instanceof qc.Atlas)) return null;
 
-    return atlas;
+    return new qc.Texture(atlas, value[3]);
 }

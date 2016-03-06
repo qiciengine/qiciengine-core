@@ -53,7 +53,7 @@ qc.ActionProperties[qc.PROP_POSITON] = {
         ],
 };
 qc.ActionProperties[qc.PROP_ANCHORED_POSITION] = {
-        name: 'Anchored Position',
+        name: 'AnchoredPosition',
         class: 'qc.CurveProp',
         curve: true,
         properties: [
@@ -217,7 +217,7 @@ qc.ActionProperties[qc.PROP_TEXT] = {
         ],
 };
 qc.ActionProperties[qc.PROP_TOGGLE_ON] = {
-        name: 'Toggle.On',
+        name: 'ToggleOn',
         class: 'qc.KeyProp',
         forceUpdate: true,
         properties: [
@@ -229,7 +229,7 @@ qc.ActionProperties[qc.PROP_TOGGLE_ON] = {
         ],
 };
 qc.ActionProperties[qc.PROP_SCROLLBAR_VALUE] = {
-        name: 'ScrollBar.value',
+        name: 'ScrollBarValue',
         class: 'qc.CurveProp',
         curve: true,
         properties: [
@@ -240,7 +240,7 @@ qc.ActionProperties[qc.PROP_SCROLLBAR_VALUE] = {
         ],
 };
 qc.ActionProperties[qc.PROP_SCROLLVIEW_POSITION] = {
-        name: 'ScrollView.Position',
+        name: 'ScrollViewPosition',
         class: 'qc.CurveProp',
         curve: true,
         properties: [
@@ -255,7 +255,7 @@ qc.ActionProperties[qc.PROP_SCROLLVIEW_POSITION] = {
         ],
 };
 qc.ActionProperties[qc.PROP_PROGRESSBAR_VALUE] = {
-        name: 'ProgressBar.value',
+        name: 'ProgressBarValue',
         class: 'qc.CurveProp',
         curve: true,
         properties: [
@@ -266,7 +266,7 @@ qc.ActionProperties[qc.PROP_PROGRESSBAR_VALUE] = {
         ],
 };
 qc.ActionProperties[qc.PROP_SLIDER_VALUE] = {
-        name: 'Slider.value',
+        name: 'SliderValue',
         class: 'qc.CurveProp',
         curve: true,
         properties: [
@@ -292,7 +292,7 @@ qc.ActionProperties[qc.PROP_SOUND] = {
         ],
 };
 qc.ActionProperties[qc.PROP_DOM_INNERHTML] = {
-        name: 'Dom.innerHTML',
+        name: 'DomInnerHTML',
         class: 'qc.KeyProp',
         forceUpdate: true,
         properties: [
@@ -304,7 +304,7 @@ qc.ActionProperties[qc.PROP_DOM_INNERHTML] = {
         ],
 };
 qc.ActionProperties[qc.PROP_TILEMAP_POSITION] = {
-        name: 'Tilemap.position',
+        name: 'TilemapPosition',
         class: 'qc.CurveProp',
         curve: true,
         properties: [
@@ -340,4 +340,81 @@ qc.propertyList = {
     'qc.Graphics' : [],
     'qc.UIRoot' : [],
     'qc.Tilemap' : [qc.PROP_TILEMAP_POSITION],
+};
+
+/*
+ * 增加自定义的属性
+ * className: 属性的 gameObject 对象的类名，若属性为组件的属性，则 className 为组件的 gameObject 对象的类名
+ * property：属性字段，若为组件的属性，以 qc.Demo.Test 组件的 testValue 属性为例，可传入 Test.testValue 字符串作为 property
+ * valueType: 属性的类型，目前默认支持 qc.Serializer.NUMBER、qc.Serializer.STRING、qc.Serializer.BOOLEAN、qc.Serializer.COLOR、qc.Serializer.AUDIO、qc.Serializer.TEXTURE 这几种类型
+ */
+qc.extend = qc.extend || {};
+qc.extend.addProperty = function(className, property, valueType) {
+
+    // 给 qc.ActionProperties 设置自定义数据
+    if (valueType === qc.Serializer.NUMBER)
+    {
+        // 以曲线类型的方式组织
+        qc.ActionProperties[property] = {
+            name: property,
+            class: 'qc.CurveProp',
+            curve: true,
+            isCustomProperty: true,
+            properties: [
+                {
+                    attrib: property,
+                    type: qc.Serializer.NUMBER,
+                },
+            ],
+        }
+    }
+    else if (valueType === qc.Serializer.TEXTURE)
+    {
+        qc.ActionProperties[property] = {
+                name: property,
+                class: 'qc.TextureKeyProp',
+                forceUpdate: true,
+                isCustomProperty: true,
+                properties: [
+                    {
+                        attrib: property,
+                        type: qc.Serializer.TEXTURE,
+                    },
+                ],
+        };
+    }
+    else if (valueType === qc.Serializer.COLOR)
+    {
+        qc.ActionProperties[property] = {
+                name: property,
+                class: 'qc.ColorLinearProp',
+                isCustomProperty: true,
+                properties: [
+                    {
+                        attrib: property,
+                        type: Serializer.COLOR,
+                        default: qc.Color.white,
+                    },
+                ],
+        };
+    }
+    else
+    {
+        qc.ActionProperties[property] = {
+                name: property,
+                class: 'qc.KeyProp',
+                forceUpdate: true,
+                isCustomProperty: true,
+                properties: [
+                    {
+                        attrib: property,
+                        type: valueType,
+                    },
+                ],
+        };
+    }
+
+    // 给 qc.propertyList 设置上自定义的数据
+    qc.propertyList[className] = qc.propertyList[className] || [];
+    qc.propertyList[className].push(property);
 }

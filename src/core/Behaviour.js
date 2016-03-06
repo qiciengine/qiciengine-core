@@ -101,6 +101,42 @@ Object.defineProperties(Behaviour.prototype, {
     },
 
     /**
+     * 组件的 key
+     * this.gameObject[key] 可直接取得该组件对象
+     * @property {string}
+     */
+    'key' : {
+        get : function()  {
+            if (this._key)
+                return this._key;
+
+            // 默认取 class 的最后的一个单词作为 key
+            // 比如 qc.Box2D.Body 组件，取 Body 作为 key
+            if (this.class)
+            {
+                var match = this.class.match(/([^\..]*)$/);
+                if (match)
+                    this._key = match[1];
+            }
+            return this._key;
+        },
+        set : function(v) {
+            if (this._key)
+            {
+                if (this.gameObject && this.gameObject[this._key] &&
+                    this.gameObject[this._key].uuid === this.uuid)
+                    // 将旧的应用移除
+                    delete this.gameObject[this._key];
+            }
+
+            this._key = v;
+            if (this.gameObject && !this.gameObject[v])
+                // 属主对象可直接通过 key 取得该组件对象
+                this.gameObject[v] = this;
+        }
+    },
+
+    /**
      * 组件是不是激活的，如果没有激活相当于没有add此脚本
      */
     enable : {

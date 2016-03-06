@@ -29,7 +29,7 @@ Serializer.prototype.getAutoType = function(v) {
     if (typeof v === 'string') return Serializer.STRING;
     if (typeof v === 'boolean') return Serializer.BOOLEAN;
     if (v instanceof qc.Node) return Serializer.NODE;
-    if (v instanceof qc.Atlas) return Serializer.TEXTURE;
+    if (v instanceof qc.Texture) return Serializer.TEXTURE;
     if (v instanceof qc.SoundAsset) return Serializer.AUDIO;
     if (v instanceof qc.TextAsset) return Serializer.TEXTASSET;
     if (v instanceof qc.ActionAsset) return Serializer.ACTION;
@@ -81,11 +81,13 @@ Serializer.prototype.newNode = function(clazz, parent, uuid) {
         return this.game.add.dom(parent, uuid);
     case 'qc.Graphics':
         return this.game.add.graphics(parent, uuid);
+    case 'qc.Dropdown':
+        return this.game.add.dropdown(parent, uuid);
     default:
         // 尝试查找自定义构造方法，通常用于用户扩展的Node
         var method = Serializer.customDeserializers[clazz];
         if (method)
-            return method(parent, uuid);
+            return method(this.game, parent, uuid);
         else
             throw new Error('unsupported class:' + clazz);
     }

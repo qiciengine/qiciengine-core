@@ -129,6 +129,8 @@ Serializer.prototype.restoreBundle = function(json, parent, restoreChild) {
         this.restoreContext = {};
     }
 
+    this.isRestoring = true;
+
     var uuid = json.data.uuid;
     if (this.game.nodePool.find(uuid))
         uuid = this.game.math.uuid();
@@ -145,14 +147,13 @@ Serializer.prototype.restoreBundle = function(json, parent, restoreChild) {
         this.fromJson(ob, data, k, meta[k]);
     }
 
-    // 反序列化子孙的话，就不需要后续流程，等待根节点序列化完成后一次性执行就好了
-    if (restoreChild) {
-        // 派发node的反序列化完成事件
-        if (ob.onDeserialized)
-            ob.onDeserialized();
+    // 派发node的反序列化完成事件
+    if (ob.onDeserialized)
+        ob.onDeserialized();
 
+    // 反序列化子孙的话，就不需要后续流程，等待根节点序列化完成后一次性执行就好了
+    if (restoreChild)
         return ob;
-    }
 
     // 序列化Node节点的引用
     ob._restoreNodeRef();
@@ -168,6 +169,7 @@ Serializer.prototype.restoreBundle = function(json, parent, restoreChild) {
 
     // 搞定收工
     this.restoreContext = {};
+    this.isRestoring = false;
     return ob;
 };
 
@@ -179,6 +181,7 @@ Serializer.prototype.restoreState = function(json) {
     // 先还原出所有子孙
     var arr = [];
     this.restoreContext = {};
+    this.isRestoring = true;
     for (var i in json.children) {
         var child = this.restoreBundle(json.children[i], this.game.world, true);
         arr.push(child);
@@ -200,6 +203,7 @@ Serializer.prototype.restoreState = function(json) {
 
     // 清理下
     this.restoreContext = {};
+    this.isRestoring = false;
 };
 
 /**

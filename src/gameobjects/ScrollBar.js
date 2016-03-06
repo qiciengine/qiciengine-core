@@ -18,6 +18,11 @@ var ScrollBar = qc.ScrollBar = function(game, parent, uuid) {
      */
     this.name = 'ScrollBar';
 
+    /**
+     * @property {boolean} autoHide - 当滑块长度和滑块区域长度相等时，是否将滚动条隐藏
+     */
+    this.autoHide = false;
+
     // 设置默认值
     this._setValue(0, false);
 
@@ -90,8 +95,10 @@ Object.defineProperties(ScrollBar.prototype, {
             return this._size;
         },
         set : function(value) {
-            if (!this.fixSlidersSize) {
-                this._size = Phaser.Math.clamp(value, 0, 1);
+            var clampSize = Phaser.Math.clamp(value, 0, 1);
+            this.visible = !(this.autoHide && this.game.math.fuzzyEqual(clampSize, 1));
+            if (this.visible && !this.fixSlidersSize) {
+                this._size = clampSize;
                 this._size = Math.max(5 / Math.max(this.height, this.width), this._size);
                 this._updateSliders();
             }
@@ -201,6 +208,7 @@ ScrollBar.prototype.getMeta = function() {
     json.numberOfStep = s.NUMBER;
     json.direction = s.NUMBER;
     json.fixSlidersSize = s.BOOLEAN;
+    json.autoHide = s.BOOLEAN;
     return json;
 };
 

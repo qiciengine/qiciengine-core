@@ -603,6 +603,8 @@ InputField.prototype.onDestroy = function() {
  * @private
  */
 InputField.prototype._dispatchAwake = function() {
+    Node.prototype._dispatchAwake.call(this);
+    
     this._checkVisibility();  
 };
 

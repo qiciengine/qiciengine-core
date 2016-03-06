@@ -77,6 +77,15 @@ PIXI.WebGLFilterManager.prototype.pushFilter = function(filterBlock)
     this.filterStack.push(filterBlock);
 
     var filter = filterBlock.filterPasses[0];
+    var fArea = filterBlock._filterArea;
+    var minX = Math.max(this.offsetX, fArea.x);
+    var minY = Math.max(this.offsetY, fArea.y);
+    var maxX = Math.max(minX, Math.min(fArea.x + fArea.width, this.width + this.offsetX));
+    var maxY = Math.max(minY, Math.min(fArea.y + fArea.height, this.height + this.offsetY));
+    fArea.x = minX;
+    fArea.y = minY;
+    fArea.width = maxX - minX;
+    fArea.height = maxY - minY;
 
     this.offsetX += filterBlock._filterArea.x;
     this.offsetY += filterBlock._filterArea.y;

@@ -177,34 +177,34 @@ Slider.prototype._calcPointValue = function(barPoint, isDrag) {
     var value = 0;
     var rect = this.rect;
     switch (this.style) {
-        case Slider.STYLE_HORIZONTAL:
-        case Slider.STYLE_VERTICAL:
-            value = this.minValue + (barPoint[this._axisPos] - rect[this._axisPos]) * this.length / rect[this._axisSize];
-            break;
-        case Slider.STYLE_CIRCLE:
-            var PI2 = 2 * Math.PI;
-            var tmp = Math.atan2(barPoint.x - rect.centerX, rect.centerY - barPoint.y);
-            if (tmp < 0) {
-                tmp += PI2;
+    case Slider.STYLE_HORIZONTAL:
+    case Slider.STYLE_VERTICAL:
+        value = this.minValue + (barPoint[this._axisPos] - rect[this._axisPos]) * this.length / rect[this._axisSize];
+        break;
+    case Slider.STYLE_CIRCLE:
+        var PI2 = 2 * Math.PI;
+        var tmp = Math.atan2(barPoint.x - rect.centerX, rect.centerY - barPoint.y);
+        if (tmp < 0) {
+            tmp += PI2;
+        }
+        if (isDrag) {
+            if (typeof this._tempDragAngle === 'undefined' || this._tempDragAngle === null) {
+                this._tempDragAngle = tmp;
+                this._recordDragAngle = tmp;
             }
-            if (isDrag) {
-                if (typeof this._tempDragAngle === 'undefined' || this._tempDragAngle === null) {
-                    this._tempDragAngle = tmp;
-                    this._recordDragAngle = tmp;
+            else {
+                var diff = tmp - this._tempDragAngle;
+                this._tempDragAngle = tmp;
+                if (Math.abs(diff) > Math.PI) {
+                    diff = Phaser.Math.sign(diff) * (PI2 - Math.abs(diff));
                 }
-                else {
-                    var diff = tmp - this._tempDragAngle;
-                    this._tempDragAngle = tmp;
-                    if (Math.abs(diff) > Math.PI) {
-                        diff = Phaser.Math.sign(diff) * (PI2 - Math.abs(diff));
-                    }
 
-                    this._recordDragAngle += diff;
-                    tmp = this._recordDragAngle;
-                }
+                this._recordDragAngle += diff;
+                tmp = this._recordDragAngle;
             }
-            value = this.minValue + (tmp - this.startRadian) * this.length / this.showRadian;
-            break;
+        }
+        value = this.minValue + (tmp - this.startRadian) * this.length / this.showRadian;
+        break;
     }
     if (this.reverse) {
         value = this.maxValue - value + this.minValue;

@@ -52,6 +52,9 @@ var Action = qc.Action = function(game, id) {
     // 是否循环
     self.loop = false;
 
+    // 是否在编辑器中播放事件
+    self.playEventInEditor = true;
+
     // 是否在运行中
     self.isRunning = false;
 
@@ -156,11 +159,16 @@ Action.prototype.addProperty = function(path, propertyId, propList, refresh) {
     var propertyOb = this.propertyList[key];
     if (propertyOb)
     {
-        this.game.log.important('Action\'s has duplicate key : {0} in addProperty', key);
+        this.game.log.important('Action has duplicate key : {0} in addProperty', key);
         return;
     }
 
     var propertyInfo = qc.ActionProperties[propertyId];
+    if (!propertyInfo)
+    {
+        this.game.log.important('Can\'t find propertyId : {0} in addProperty', propertyId);
+        return;
+    }
     var clazz = qc.Util.findClass(propertyInfo.class);
     propertyOb = new clazz(this, path, propertyId);
     var duration = propertyOb.fromJson(propertyInfo, propList);
@@ -382,7 +390,7 @@ Action.prototype.update = function(deltaTime, isBegin, inEditor, forceUpdate) {
         // 刚刚开始，则间隔时间为0
         deltaTime = 0;
 
-    var preElapsedTime = this.elapsedFrame;
+    var preElapsedTime = isBegin ? -1 : this.elapsedFrame;
     this.elapsedFrame += deltaTime / 1000 * this.samples;
 
     //console.log('Action frame update:', this.elapsedFrame);
@@ -393,6 +401,9 @@ Action.prototype.update = function(deltaTime, isBegin, inEditor, forceUpdate) {
         var data = this.actionList[i];
         data.propOb.update(data.target, this.elapsedFrame, isBegin, inEditor, forceUpdate);
     }
+
+    if (inEditor && !this.playEventInEditor)
+        return;
 
     // 判断是否触发动画帧事件
     if (this.eventList.length > 0)
@@ -516,6 +527,9 @@ Action.buildBundle = function(ob) {
     // 打包 samples
     content.samples = ob.samples;
 
+    // 打包 playEventInEditor
+    content.playEventInEditor = ob.playEventInEditor;
+
     // 打包名字
     if (ob.name)
         content.name = ob.name;
@@ -582,6 +596,9 @@ Action.restoreBundle = function(asset, game, inEditor) {
 
     // 还原 samples
     action.samples = json.samples || 60;
+
+    // 还原 playEventInEditor
+    action.playEventInEditor = typeof(json.playEventInEditor) === 'boolean' ? json.playEventInEditor : true;
 
     // 还原 targetObject
     action.targetObject = json.targetObject;
