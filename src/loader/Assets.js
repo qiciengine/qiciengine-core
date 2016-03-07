@@ -476,7 +476,7 @@ Assets.prototype.unload = function(asset) {
             // 指明了key或者url
             var url = this._keyUrl[asset];
             if (url) {
-                if (this._assets[url])
+                if (this._assets[url] && this._assets[url].unload)
                     this._assets[url].unload(this.game);
                 delete this._assets[url];
                 delete this._keyUrl[asset];
