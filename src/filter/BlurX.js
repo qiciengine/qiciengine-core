@@ -43,6 +43,7 @@ Object.defineProperty(BlurX.prototype, 'blur', {
     set: function(value) {
         this.dirty = true;
         this._blur = value;
+        this.padding = Math.max(0, value);
     }
 
 });

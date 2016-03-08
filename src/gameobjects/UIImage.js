@@ -72,7 +72,7 @@ Object.defineProperties(UIImage.prototype, {
                         return;
                     }
                 }
-                else 
+                else
                     return;
             }
             if (self._atlas === value.atlas && self.frame === value.frame) return;
@@ -992,7 +992,7 @@ var imageRenderCanvas = function(renderSession) {
         }
         else if (_qc.texture && width && height) {
             // 用于查找 canvas 的关键字
-            var canvasKey = _qc.texture.uuid + imageType + _qc.frame + this.tint + width + height;
+            var canvasKey = '' + _qc.texture.atlas.uuid + imageType + _qc.frame + this.tint + width + height;
             var canvasFetchRet = qc.CanvasPool.get(canvasKey);
             var cacheCanvas = canvasFetchRet.canvas;
             if (canvasFetchRet.dirty) {

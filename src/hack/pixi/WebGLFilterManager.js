@@ -63,7 +63,7 @@ PIXI.WebGLFilterManager.prototype.pushFilter = function(filterBlock)
     var projection = this.renderSession.projection;
     var offset = this.renderSession.offset;
 
-    filterBlock._filterArea = filterBlock.target.filterArea || filterBlock.target.getBounds();
+    var filterArea = filterBlock._filterArea = (filterBlock.target.filterArea || filterBlock.target.getBounds()).clone();
 
     // modify by chenqx
     filterBlock._previous_stencil_mgr = this.renderSession.stencilManager;
@@ -76,19 +76,31 @@ PIXI.WebGLFilterManager.prototype.pushFilter = function(filterBlock)
     // OPTIMISATION - the first filter is free if its a simple color change?
     this.filterStack.push(filterBlock);
 
-    var filter = filterBlock.filterPasses[0];
-    var fArea = filterBlock._filterArea;
-    var minX = Math.max(this.offsetX, fArea.x);
-    var minY = Math.max(this.offsetY, fArea.y);
-    var maxX = Math.max(minX, Math.min(fArea.x + fArea.width, this.width + this.offsetX));
-    var maxY = Math.max(minY, Math.min(fArea.y + fArea.height, this.height + this.offsetY));
-    fArea.x = minX;
-    fArea.y = minY;
-    fArea.width = maxX - minX;
-    fArea.height = maxY - minY;
+    var filterPassesIdx = filterBlock.filterPasses.length;
+    var padding = 0;
+    while (filterPassesIdx--) {
+        var filter = filterBlock.filterPasses[filterPassesIdx];
+        if (filter.padding > padding) {
+            padding = filter.padding;
+        }
+    }
 
-    this.offsetX += filterBlock._filterArea.x;
-    this.offsetY += filterBlock._filterArea.y;
+    filterArea.x -= padding;
+    filterArea.y -= padding;
+    filterArea.width += padding * 2;
+    filterArea.height += padding * 2;
+
+    var minX = Math.max(this.offsetX, filterArea.x);
+    var minY = Math.max(this.offsetY, filterArea.y);
+    var maxX = Math.max(minX, Math.min(filterArea.x + filterArea.width, this.width + this.offsetX));
+    var maxY = Math.max(minY, Math.min(filterArea.y + filterArea.height, this.height + this.offsetY));
+    filterArea.x = minX;
+    filterArea.y = minY;
+    filterArea.width = maxX - minX;
+    filterArea.height = maxY - minY;
+
+    this.offsetX += filterArea.x;
+    this.offsetY += filterArea.y;
 
     var texture = this.texturePool.pop();
     if(!texture)
@@ -101,14 +113,6 @@ PIXI.WebGLFilterManager.prototype.pushFilter = function(filterBlock)
     }
 
     gl.bindTexture(gl.TEXTURE_2D,  texture.texture);
-
-    var filterArea = filterBlock._filterArea;// filterBlock.target.getBounds();///filterBlock.target.filterArea;
-
-    var padding = filter.padding;
-    filterArea.x -= padding;
-    filterArea.y -= padding;
-    filterArea.width += padding * 2;
-    filterArea.height += padding * 2;
 
     // cap filter to screen size..
     /**

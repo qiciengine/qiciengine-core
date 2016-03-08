@@ -377,6 +377,7 @@ InputField.prototype.update = function() {
     }
     if (textComponent.textPhaser.renderable !== lastRenderable) {
         textComponent.textPhaser.displayChanged(textComponent.textPhaser.renderable ? qc.DisplayChangeStatus.SHOW : qc.DisplayChangeStatus.HIDE);
+        this.phaser.displayChanged(textComponent.textPhaser.renderable ? qc.DisplayChangeStatus.SHOW : qc.DisplayChangeStatus.HIDE);
     }
 };
 
@@ -483,7 +484,8 @@ InputField.prototype.startEditing = function() {
         if (this.characterLimit > 0) {
             input.setAttribute('maxlength', this.characterLimit);
         }
-        input.value = this.text;
+        input._qc = self;
+        input.value = self.text;
         var style = input.style;
         style.position = 'absolute';
         style.padding = 0;
