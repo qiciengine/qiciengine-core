@@ -3,4 +3,4 @@
  */
 
 this.qc = this.qc || {};
-this.qc.VERSION = '1.0.8';
+this.qc.VERSION = '1.0.9';
