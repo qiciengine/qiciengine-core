@@ -158,7 +158,12 @@ var createFunc = function(baseRenderFunc){
             matrix.b *= x;
             matrix.c *= y;
             matrix.d *= y;
-
+            if (this.game.antialias && (matrix.a !== matrix.d || matrix.b !== 0 || matrix.c !== 0)) {
+                this.texture.baseTexture.scaleMode = PIXI.scaleModes.LINEAR;
+            }
+            else {
+                this.texture.baseTexture.scaleMode = PIXI.scaleModes.NEAREST;
+            }
             // 调用原始实现
             baseRenderFunc.call(this, renderSession);
 
