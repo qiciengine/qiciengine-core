@@ -143,9 +143,13 @@ Serializer.prototype.restoreBundle = function(json, parent, restoreChild) {
     if (ob.getMeta)
         meta = ob.getMeta();
     var data = json.data;
+
     for (var k in meta) {
+        if (k === 'scripts')
+            continue;
         this.fromJson(ob, data, k, meta[k]);
     }
+    if (meta.scripts) this.fromJson(ob, data, 'scripts', meta.scripts);
 
     // 派发node的反序列化完成事件
     if (ob.onDeserialized)
