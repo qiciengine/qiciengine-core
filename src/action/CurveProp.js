@@ -321,19 +321,27 @@ CurveProp.prototype.isKey = function(attrib, time) {
 }
 
 // 帧调度
-CurveProp.prototype.update = function(target, elapsedTime, isBegin, forceUpdate) {
+CurveProp.prototype.update = function(target, elapsedTime, isBegin, inEditor, forceUpdate) {
+    if (isBegin)
+        this.keyIndexMap = {};
+
     for (var attrib in this.propMap)
     {
+        if (!inEditor && this.keyIndexMap[attrib])
+            continue;
         var prop = this.propMap[attrib];
+        var curve = prop.curve;
         var curveType = prop.curveType;
         var targetValue;
         if (isBegin)
         {
+            // 初始设置 from 值
             if (curveType === qc.CURVE_TYPE_RELATIVE ||
                 curveType === qc.CURVE_TYPE_TWEEN_RELATIVE)
             {
                 if (prop.attribArray)
                 {
+                    // 级联格式的属性处理
                     var len = prop.attribArray.length;
                     if (len === 2)
                         targetValue = target[prop.attribArray[0]] ? target[prop.attribArray[0]][prop.attribArray[1]] : null;
@@ -355,15 +363,19 @@ CurveProp.prototype.update = function(target, elapsedTime, isBegin, forceUpdate)
                 prop.from = targetValue;
             }
         }
-        var from = this.getFromValue(target, attrib, elapsedTime);
-        var to = prop.to;
-        var curve = prop.curve;
-
         if (curve._keys.length <= 0)
             continue;
+        if (curve._keys[0].time > elapsedTime)
+            // 开始时间未到
+            continue;
+
+        var from = this.getFromValue(target, attrib, elapsedTime);
+        var to = prop.to;
 
         // 取得该时间点的值
         var value = curve.evaluate(elapsedTime);
+        if (!inEditor && curve._keys[curve._keys.length - 1].time <= elapsedTime)
+            this.keyIndexMap[attrib] = 1;
 
         // 设置属性值
         if (curveType === qc.CURVE_TYPE_ABSOLUTE)

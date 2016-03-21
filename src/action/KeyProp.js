@@ -10,9 +10,6 @@ var KeyProp = qc.KeyProp = function(action, path, propertyId) {
 
     var self = this;
     qc.Prop.call(self, action, path, propertyId);
-
-    // 关键帧序号映射
-    self.keyIndexMap = {};
 };
 KeyProp.prototype = Object.create(qc.Prop.prototype);
 KeyProp.prototype.constructor = KeyProp;

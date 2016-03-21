@@ -499,7 +499,7 @@ Serializer.prototype.fromJson = function(ob, json, key, type) {
                 if (value[1][i][0] === Serializer.ACTION)
                     list.push(this._restoreActionItem(value[1][i]));
                 else if (value[1][i][0] === Serializer.ACTIONMANAGER)
-                    list.push(this._restoreActionItem(value[1][i]));
+                    list.push(this._restoreActionManagerItem(value[1][i]));
             }
         }
         ob[key] = list;

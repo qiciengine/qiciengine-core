@@ -21,6 +21,9 @@ var Prop = qc.Prop = function(action, path, propertyId) {
 
     // 属性默认值
     self.propDefaultValue = {};
+
+    // 关键帧序号映射
+    self.keyIndexMap = {};
 };
 Prop.prototype.constructor = Prop;
 
@@ -234,4 +237,9 @@ Prop.prototype.isKey = function(attrib, time) {
 // 帧调度
 // 子类需要重载
 Prop.prototype.update = function(target, elapsedTime, isBegin, inEditor, forceUpdate) {
+}
+
+// 属性重置
+Prop.prototype.reset = function() {
+    this.keyIndexMap = {};
 }

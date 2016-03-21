@@ -138,6 +138,7 @@ module.exports = function (grunt) {
             'src/action/KeyProp.js',
             'src/action/LinearProp.js',
             'src/action/CurveProp.js',
+            'src/action/ActionState.js',
             'src/action/*.js',
 
             'src/time/Time.js',

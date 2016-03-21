@@ -7,63 +7,45 @@
  */
 
 // qc.ActionManager类定义
-var ActionManager = qc.ActionManager = function(game, id) {
+var ActionManager = qc.ActionManager = function(game) {
 
     var self = this;
-    self.game = game;
-    self.class = 'qc.ActionManager';
-
-    self.id = id;
-
-    // 播放 action 的对象
-    self._targetObject = null;
-
-    // 目标对象是否锁定
-    self.targetLocked = false;
 
     // 缓存 action 列表
-    self.actionList = {};
+    self.actionList = [];
 
-    // 当前正在运行的 action
-    self.curActionList = [];
+    qc.ActionState.call(self, game);
 
-    // 缓存 transition 列表
-    self.transitionList = {};
+    self.class = 'qc.ActionManager';
 
-    // 记录 action 目标的连接路线
-    self.transitionToLink = {};
+    // 结束线的帧数
+    self._endLinePos = -1;
 
-    // 记录 action 来源的连接路线
-    self.transitionFromLink = {};
-
-    // 是否在运行中
-    self.isRunning = false;
-
-    // 所有挂载的脚本
-    self.scripts = [];
-
-    // 递增编号
-    self.cookie = 1;
+    // 正在运行中的 action
+    self.runningActions = {};
 };
 
-ActionManager.prototype = {};
+ActionManager.prototype = Object.create(qc.ActionState.prototype);
 ActionManager.prototype.constructor = ActionManager;
 
 ActionManager.prototype.awake = function() {
 
+    this.unpackDone = true;
+
     if (typeof(this.targetObject) === 'string')
         this.targetObject = this.game.nodePool.find(this.targetObject);
 
-    // 所有的脚本派发awake事件
-    for (var s in this.scripts) {
-        var script = this.scripts[s];
-
-        if (script.awake)
-            script.awake.call(script);
+    if (!this.targetObject && this.targetLocked)
+    {
+        this.game.log.trace('Action({0}) can not find targetObject.', this.name);
+        return;
     }
 
-    for (var id in this.actionList)
-        this.actionList[id].awake();
+    for (var i = 0; i < this.actionList.length; i++)
+    {
+        if (this.actionList[i] && this.actionList[i][1])
+            this.actionList[i][1].awake();
+    }
 };
 
 // 析构
@@ -74,52 +56,14 @@ ActionManager.prototype.destroy = function() {
     self.isRunning = false;
     self._targetObject = null;
 
-    // 通知所有挂载的脚本移除
-    var i = self.scripts.length;
-    while (i--) {
-        self.scripts[i].destroy();
-    }
-    self.scripts = [];
-
     // 移除所有 action
-    for (var id in self.actionList)
-        self.actionList[id].destroy();
-    self.actionList = {};
-
-    // 移除所有 transition
-    for (var id in self.transitionList)
-        self.transitionList[id].destroy();
-    self.transitionList = {};
-
-    self.curActionList = [];
-    self.transitionToLink = {};
-    self.transitionFromLink = {};
-}
-
-// 引用 qc.Node 的 script 脚本机制
-ActionManager.prototype.removeScript = qc.Node.prototype.removeScript;
-ActionManager.prototype.getScript = qc.Node.prototype.getScript;
-ActionManager.prototype._packScripts = qc.Node.prototype._packScripts;
-ActionManager.prototype._unpackScripts = qc.Node.prototype._unpackScripts;
-
-ActionManager.prototype.addScript = function(script, dispatchAwake) {
-    var c = qc.Node.prototype.addScript.call(this, script, dispatchAwake);
-
-    // 判断是否脚本有 Serializer.NODE 类型，不允许有该类型
-    var meta = {};
-    if (c.getMeta)
-        meta = c.getMeta();
-    for (var k in meta) {
-        if (meta[k] === qc.Serializer.NODE)
-        {
-            var str = 'ActionManger\'s script is not allowed to set Serializer.NODE variable';
-            console.error(str);
-            qc.Util.popupError(str);
-        }
+    for (var i = 0; i < this.actionList.length; i++)
+    {
+        if (this.actionList[i] && this.actionList[i][1])
+            this.actionList[i][1].destroy();
     }
-
-    return c;
-};
+    self.actionList = [];
+}
 
 Object.defineProperties(ActionManager.prototype, {
 
@@ -129,344 +73,343 @@ Object.defineProperties(ActionManager.prototype, {
             return this._targetObject;
         },
         set : function(v) {
-            if (v === this._targetObject && this._targetObject)
+            if (this.unpackDone && v === this._targetObject && this._targetObject)
                 return;
 
             this._targetObject = v;
 
-            if (typeof(v) === 'string')
-                return;
-
             // 依次设置 action 的 targetObject
-            for (var id in this.actionList)
-                if (!this.actionList[id].targetLocked)
-                    this.actionList[id].targetObject = v;
-
-        }
-    },
-});
-
-// 帧调度
-ActionManager.prototype.update = function() {
-
-    if (!this.isRunning)
-        return;
-
-    var addList = [];
-    var removeAction;
-    var isFinished;
-
-    // 遍历正在运行中的 action，依次执行
-    for (var i = 0; i < this.curActionList.length; i++)
-    {
-        var action = this.curActionList[i];
-
-        // 执行 action 更新
-        // 若有返回值，则表示 action 移向下一个 action 的 condition 值
-        // qc.FinishTrigger 表示 action 已完成；qc.EventTrigger 表示 action 中途移向下个 action。
-        var condition = action.update();
-        if (condition)
-        {
-            // 取得满足该 condition 的 transition
-            var actionId = action.id;
-            var transitions = this.transitionToLink[actionId] || [];
-            for (var i = 0; i < transitions.length; i++)
+            for (var i = 0; i < this.actionList.length; i++)
             {
-                var transition = transitions[i];
-                if (transition.condition !== condition)
+                if (!this.actionList[i])
                     continue;
-
-                if (transition.toAction === -1)
-                    // 表示下一个为 Exit 节点
-                    isFinished = true;
-                else
-                {
-                    // 移向下一个 action
-                    var toAction = this.actionList[transition.toAction];
-                    var actionList = transition.moveToAction(this, toAction);
-
-                    // 将该 action 加入当前列表中
-                    addList.push.apply(addList, actionList)
-                }
+                var action = this.actionList[i][1];
+                if (action && !action.targetLocked)
+                    action.targetObject = v;
             }
         }
+    },
+    // 是否运行中
+    isRunning : {
+        get : function() {
+            return this._isRunning;
+        },
+        set : function(v) {
+            this._isRunning = v;
 
-        if (condition == qc.FinishTrigger)
-        {
-            // 该 action 运行结束，需要从当前列表中移除
-            this.curActionList[i] = undefined;
-            removeAction = true;
+            // 依次设置 action 的 targetObject
+            for (var i = 0; i < this.actionList.length; i++)
+            {
+                if (!this.actionList[i])
+                    continue;
+                var action = this.actionList[i][1];
+                if (action)
+                    action.isRunning = v;
+            }
+        }
+    },
+    // 结束线位置
+    endLinePos : {
+        get : function() {
+            return this._endLinePos;
+        },
+        set : function(v) {
+            this._endLinePos = v;
+            if (v > -1)
+                // 设置动作时长
+                this.duration = v;
+            else
+            {
+                // 重新计算动作时长
+                this.getDuration(true);
+            }
         }
     }
-
-    if (isFinished)
-    {
-        // 该 action manager 播放完毕
-        this.isRunning = false;
-        this.curActionList = [];
-        return qc.FinishTrigger;
-    }
-
-    // 若有需要移除的 action，则重新构建 action 当前列表
-    if (removeAction)
-    {
-        var tempActionList = [];
-        for (var i = 0; i < this.curActionList.length; i++)
-        {
-            if (this.curActionList[i])
-                tempActionList.push(this.curActionList[i]);
-        }
-        this.curActionList = tempActionList;
-    }
-
-    // 将新的 action 加入当前列表
-    for (var i = 0; i < addList.length; i++)
-        this.curActionList.push(addList[i]);
-};
-
-// 加入 action
-ActionManager.prototype.addAction = function(action, isRestore) {
-
-    if (isRestore)
-    {
-        self.actionList[action.id] = action;
-        return action.id;
-    }
-
-    var self = this;
-    self.cookie += 1;
-
-    // 设置 action ID
-    action.setId(self.cookie);
-    self.actionList[self.cookie] = action;
-
-    return self.cookie;
-};
-
-// 删除 action
-ActionManager.prototype.deleteAction = function(action) {
-
-    // 移除该 action 的连接关系
-    var fromLink = this.transitionFromLink[action.id] || [];
-    for (var i = 0; i < fromLink.length; i++)
-    {
-        var transition = fromLink[i];
-
-        // 移除缓存
-        this.transitionList[transition.id] = undefined;
-
-        // 析构 transition
-        transition.destroy();
-    }
-    this.transitionFromLink[action.id] = undefined;
-
-    var toLink = this.transitionToLink[action.id] || [];
-    for (var i = 0; i < toLink.length; i++)
-    {
-        var transition = toLink[i];
-
-        // 移除缓存
-        this.transitionList[transition.id] = undefined;
-
-        // 析构 transition
-        transition.destroy();
-    }
-    this.transitionToLink[action.id] = undefined;
-
-
-    // 移除 action 映射记录
-    self.actionList[action.id] = undefined;
-
-    // 析构 action
-    action.destroy();
-};
-
-// 加入 transition
-ActionManager.prototype.addTransition = function(transition, isRestore) {
-
-    // 取得连接线的源 action 和目标 action 的编号
-    var fromAction = transition.fromAction;
-    var toAction = transition.toAction;
-
-    // 建立连接关系
-    this.transitionToLink[fromAction] = this.transitionToLink[fromAction] || [];
-    this.transitionToLink[fromAction].push(transition);
-    this.transitionFromLink[toAction] = this.transitionFromLink[toAction] || [];
-    this.transitionFromLink[toAction].push(transition);
-
-    if (!isRestore)
-    {
-        this.cookie += 1;
-        transition.setId(this.cookie);
-        this.transitionList[transition.id] = transition;
-    }
-};
-
-// 删除 transition
-ActionManager.prototype.deleteTransition = function(transition) {
-
-    var fromAction = transition.fromAction;
-    var toAction = transition.toAction;
-
-    // 移除 fromAction 的目标连接关系
-    var toLink = this.transitionToLink[fromAction] || [];
-    var tempLink = [];
-    for (var i = 0; i < toLink.length; i++)
-    {
-        if (transition !== toLink[i])
-            tempLink.push(toLink[i]);
-    }
-    this.transitionToLink[fromAction] = tempLink;
-
-    // 移除 toAction 的来源连接关系
-    var fromLink = this.transitionFromLink[toAction] || [];
-    tempLink = [];
-    for (var i = 0; i < fromLink.length; i++)
-    {
-        if (transition !== fromLink[i])
-            tempLink.push(fromLink[i]);
-    }
-    this.transitionFromLink[toAction] = tempLink;
-
-    // 移除缓存
-    this.transitionList[transition.id] = undefined;
-
-    // 析构 transition
-    transition.destroy();
-
-};
+});
 
 // 重置
 ActionManager.prototype.reset = function() {
-    this.playAction(null, true);
+
+    this.elapsedFrame = 0;
+    this.startTime = 0;
+
+    this.runningActions = {};
+
+    // 依次重置各 action
+    for (var i = 0; i < this.actionList.length; i++)
+    {
+        if (!this.actionList[i])
+            continue;
+        var action = this.actionList[i][1];
+        if (action)
+            action.reset();
+    }
 };
 
-// 开始播放
-ActionManager.prototype.playAction = function(targetObject, fromBegin) {
+// 帧调度
+ActionManager.prototype.update = function(deltaTime, isBegin, inEditor, forceUpdate) {
+    if ((!this.isRunning && !inEditor) || !this.targetObject)
+        return;
 
-    this.isRunning = true;
-
-    if (!this.targetLocked && targetObject)
-        this.targetObject = targetObject;
-
-    // 当前没有 action 在运行中或从头播放，则取入口的 action
-    if (this.curActionList.length == 0 || fromBegin)
+    var time = this.game.time.scaledTime;
+    if (this.elapsedFrame >= this.duration)
     {
-        if (!this.transitionToLink[0])
+        if (!this.loop)
         {
-            this.game.log.important('entry action not exist.');
-            return;
+            // 该 action 执行完毕
+            this.isRunning = false;
+            this.onFinished.dispatch(this);
+            return qc.FinishTrigger;
         }
-
-        this.curActionList = [];
-        for (var i = 0; i < this.transitionToLink[0].length; i++)
+        else
         {
-            var transition = this.transitionToLink[0][i];
-            var toActionId = transition.toAction;
-            var toAction = this.actionList[toActionId];
+            this.onLoopFinished.dispatch(this);
 
-            // 移到下个 action
-            var actionList = transition.moveToAction(this, toAction);
+            this.isRunning = true;
 
-            // 记录为当前运行 action
-            this.curActionList.push.apply(this.curActionList, actionList);
+            // 循环播放，重新设置起初时间
+            var elapsedFrame = this.elapsedFrame - this.duration;
+            while(elapsedFrame >= this.duration)
+                elapsedFrame = elapsedFrame - this.duration;
+            deltaTime = elapsedFrame / this.samples * 1000;
+            this.reset();
+            var setStartTime = function(action, time, deltaTime) {
+                action.startTime = time;
+                var deltaFrame = deltaTime * action.samples / 1000;
+                if (action.duration < deltaFrame)
+                    // 若子 action 的时长少于 deltaFrame，则将 elapsedFrame 设置为 deltaFrame
+                    action.elapsedFrame = deltaFrame;
+
+                if (action instanceof qc.ActionManager)
+                {
+                    for (var i = 0; i < action.actionList.length; i++)
+                    {
+                        var actionInfo = action.actionList[i];
+                        if (!actionInfo)
+                            continue;
+                        var subAction = actionInfo[1];
+                        setStartTime(subAction, time, deltaTime);
+                    }
+                }
+            }
+            setStartTime(this, time - deltaTime, deltaTime);
         }
     }
 
-    return this.update();
+    deltaTime = typeof(deltaTime) === 'number' ? deltaTime : this.game.time.deltaTime;
+    if (!this.startTime)
+        this.startTime = time;
+
+    if (time === this.startTime)
+        // 刚刚开始，则间隔时间为0
+        deltaTime = 0;
+
+    var preElapsedTime = isBegin ? -1 : this.elapsedFrame;
+    this.elapsedFrame += deltaTime / 1000 * this.samples;
+
+    // 判断是否触发动画帧事件
+    if (this.eventList.length > 0 && !(inEditor && !this.playEventInEditor))
+        this.triggerEvent(preElapsedTime);
+
+    // 更新属性
+    for (var i = 0; i < this.actionList.length; i++)
+    {
+        var actionInfo = this.actionList[i];
+        if (!actionInfo)
+            continue;
+        var time = actionInfo[0], action = actionInfo[1];
+
+        if (this.elapsedFrame < time)
+            // 还没到该 action 的执行时间
+            continue;
+
+        var begin = false;
+        if (!this.runningActions[i])
+            begin = true;
+
+        action.update(deltaTime, begin, inEditor, forceUpdate);
+        this.runningActions[i] = true;
+    }
+}
+
+// 加入 action
+ActionManager.prototype.addAction = function(actionInfo) {
+    var self = this;
+    var index = self.actionList.push(actionInfo);
+
+    var time = actionInfo[0], action = actionInfo[1];
+
+    if (self.endLinePos > -1)
+        return index;
+
+    // 没有指定结束线，则计算最大的时长
+    var duration = action.getDuration();
+    if (duration === qc.MAX_DURATION)
+        self.duration = duration;
+    else if (self.duration < time + duration)
+        self.duration = time + duration;
+
+    return index;
 };
+
+// 删除 action
+ActionManager.prototype.deleteAction = function(index) {
+    var self = this;
+    if (!self.actionList[index])
+        return;
+
+    // 移除 action 映射记录
+    var action = self.actionList[index][1];
+    var preTime = 0;
+
+    // 析构 action
+    if (action)
+    {
+        var duration = action.getDuration();
+        if (duration === qc.MAX_DURATION)
+            preTime = qc.MAX_DURATION;
+        else
+            preTime = self.actionList[index][0] + duration;
+        action.destroy();
+    }
+    delete self.actionList[index];
+
+    if (this.duration === preTime)
+        this.getDuration(true);
+};
+
+// 更新 action
+ActionManager.prototype.updateActionTime = function(index, time) {
+    var self = this;
+    var actionInfo = self.actionList[index];
+    if (!actionInfo)
+        return;
+
+    actionInfo[0] = time;
+};
+
+// 取得 action 时长
+ActionManager.prototype.getDuration = function(recalc, singleLoop) {
+    if (recalc && this.endLinePos <= -1)
+    {
+        // 重新计算单次循环的时长
+        var duration = 0;
+        for (var i = 0; i < this.actionList.length; i++)
+        {
+            var actionInfo = this.actionList[i];
+            if (!actionInfo)
+                continue;
+            var value = actionInfo[1].getDuration();
+            var time = actionInfo[0];
+            if (value === qc.MAX_DURATION)
+                duration = qc.MAX_DURATION;
+            else if (duration < time + value)
+                duration = time + value;
+        }
+        this.duration = duration;
+    }
+
+    if (this.loop && !singleLoop)
+        // 该动作循环播放，且不是获得单次循环的时长，则返回 MAX_DURATION
+        return qc.MAX_DURATION;
+
+    if (this.endLinePos > -1)
+        // 有结束线，则直接取该线所在的位置
+        return this.endLinePos;
+
+    return this.duration;
+}
+
+// 打包空的 qc.ActionManager 对象
+ActionManager.buildEmptyBundle = function() {
+    return {
+        actionList : [],
+    }
+}
 
 // 打包 qc.ActionManager 对象
 ActionManager.buildBundle = function(ob) {
-    var content = { dependences : [] };
+    var content = qc.ActionState.buildBundle(ob);
 
-    // 打包 id
-    content.id = ob.id;
-
-    // 打包 scripts
-    content.scripts = ob._packScripts(content);
-    content.__json = ob.__json;
-
-    // 打包 targetObject
-    if (ob.targetObject)
-        content.targetObject = ob.targetObject.uuid;
-
-    // 打包 targetLocked
-    content.targetLocked = ob.targetLocked;
+    // 打包 endLinePos
+    content.endLinePos = ob.endLinePos;
 
     // 打包 actionList
-    var actionList = {};
-    for (var id in ob.actionList)
+    var actionList = [];
+    for (var i = 0; i < ob.actionList.length; i++)
     {
-        actionList[id] = ob.actionList[id].uuid;
-        content.dependences.push({ key : ob.actionList[id].key, uuid : actionList[id] });
+        var actionInfo = ob.actionList[i];
+        if (!actionInfo)
+            continue;
+        var action = actionInfo[1];
+        var time = actionInfo[0];
+        var uuid = action.uuid;
+        var loop = action.loop;
+        var targetUUID = action.targetObject ? action.targetObject.uuid : undefined;
+        content.dependences.push({ key : action.key, uuid : uuid });
+        actionList.push([time, uuid, loop, targetUUID, action.targetLocked]);
     }
     content.actionList = actionList;
-
-    // 打包 transition
-    var transitionList = {};
-    for (var id in ob.transitionList)
-    {
-        transitionList[id] = {
-            condition : ob.transitionList[id].condition,
-            funcName : ob.transitionList[id].funcName,
-            funcPara : ob.transitionList[id].funcPara,
-        }
-    }
-    content.transitionList = transitionList;
 
     return content;
 }
 
 // 还原出 qc.ActionManager 对象
-ActionManager.restoreBundle = function(asset, game, inEditor) {
+ActionManager.restoreBundle = function(asset, game, inEditor, context) {
     var json = asset.json;
-    var actionManager = new qc.ActionManager(game, json.id);
-    actionManager.uuid = asset.uuid;
-    actionManager.key = asset.key;
-    actionManager.name = asset.key.match(/\/([^\/]+?).bin/)[1];
+    var actionManager = new qc.ActionManager(game);
 
-    if (json.__json)
-        actionManager.__json = json.__json;
+    if (!context)
+        context = {};
+    if (context[asset.uuid])
+    {
+        // 出现递归死循环引用
+        game.log.error('Failed to add this action({0}) because of recursive reference.', asset.key);
+        return false;
+    }
+    context[asset.uuid] = true;
 
-    // 还原 scripts
-    actionManager._unpackScripts(json.scripts);
+    // 还原 endLinePos
+    actionManager.endLinePos = json.endLinePos ? json.endLinePos : -1;
 
     // 还原 actionList
-    for (var id in json.actionList)
+    for (var i = 0; i < json.actionList.length; i++)
     {
-        var uuid = json.actionList[id];
+        var actionInfo = json.actionList[i] || [];
+        var time = actionInfo[0], uuid = actionInfo[1], loop = actionInfo[2];
+        var targetUUID = actionInfo[3], targetLocked = actionInfo[4];
         var actionAsset = game.assets.findByUUID(uuid);
         if (actionAsset)
         {
-            // 还原出 action 对象
             var action;
-            if (actionAsset instanceof qc.ActionAsset)
-                action = qc.Action.restoreBundle(actionAsset, game);
-            else if (actionAsset instanceof qc.ActionManagerAsset)
-                action = qc.ActionManager.restoreBundle(actionAsset, game);
 
-            // 将 action 加入 actionManager 对象
-            actionManager.addAction(action, true);
+            // 还原出 action 对象
+            if (actionAsset instanceof qc.ActionAsset)
+                action = qc.Action.restoreBundle(actionAsset, game, !game.serializer.isRestoring);
+            else if (actionAsset instanceof qc.ActionManagerAsset)
+            {
+                action = qc.ActionManager.restoreBundle(actionAsset, game, !game.serializer.isRestoring, context);
+                if (!action)
+                {
+                    delete context[asset.uuid];
+                    return false;
+                }
+            }
+
+            action.loop = loop;
+            if (!game.serializer.isRestoring)
+                action.targetObject = game.nodePool.find(targetUUID);
+            else
+                action.targetObject = game.nodePool.find(targetUUID) || targetUUID;
+            action.targetLocked = targetLocked;
+
+            // 将 action 相关信息加入 actionManager 对象
+            actionManager.addAction([time, action]);
         }
     }
+    delete context[asset.uuid];
 
-    // 遍历 transitionList
-    for (var id in json.transitionList)
-    {
-        var data = json.transitionList[id];
-        var transition = new qc.Transition(game, id, data.condition, data.funcName, data.funcPara);
-        actionManager.addTransition(transition);
-    }
-
-    // 还原 targetLocked
-    actionManager.targetLocked = json.targetLocked;
-
-    // 还原 targetObject
-    actionManager.targetObject = game.nodePool.find(json.targetObject) || json.targetObject;
-
-    if (inEditor)
-        actionManager.awake();
+    actionManager = qc.ActionState.restoreBundle(actionManager, asset, inEditor);
 
     return actionManager;
 }
