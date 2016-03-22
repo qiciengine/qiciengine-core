@@ -51,7 +51,7 @@ Object.defineProperties(SceneManager.prototype, {
     },
 
     /**
-     * @property {object} list - 用户的场景配置，key为场景名字，value为场景的序列化文件URL
+     * @property {object} list - 用户的场景URL列表
      */
     list : {
         get : function()  { return this._list; },
@@ -61,13 +61,14 @@ Object.defineProperties(SceneManager.prototype, {
             // 构造场景对象并加入
             var self = this;
             for (var k in v) {
+                var url = v[k];
                 var state = {
                     preload : function() {
                         // 扔出事件
                         self._onPreload.dispatch();
 
                         // 加载依赖资源
-                        var asset = self.game.assets.find(self.list[self.current]);
+                        var asset = self.game.assets.find(self.current + '.bin');
                         // 如果加载失败会导致asset为空
                         if (asset) {
                             for (var i in asset.dependences) {
@@ -106,7 +107,7 @@ Object.defineProperties(SceneManager.prototype, {
                         self.onEndLoad.dispatch(state);
                     }
                 };
-                this.phaser.add(k, state, false);
+                this.phaser.add(url, state, false);
             }
         }
     },
@@ -138,7 +139,7 @@ Object.defineProperties(SceneManager.prototype, {
  */
 SceneManager.prototype.download = function(state, callback) {
     state = state || this.entry;
-    var url = this.list[state];
+    var url = state + '.bin';
 
     this.game.log.trace('Start downloading scene:{0}', state);
     this.game.assets.load(url, url, callback);
@@ -162,9 +163,12 @@ SceneManager.prototype.load = function(state, clear, preload, create) {
     }
 
     state = state || self.entry;
-    if (clear !== true) clear = false;
 
-    if (!self.list[state]) {
+    // 如果没有传入完整场景路径名，则默认从Assets/scene根目录下寻找
+    if (!/\//.test(state))
+        state = 'Assets/scene/' + state;
+
+    if (self.list.indexOf(state) < 0) {
         self.game.log.error('Scene:{0} not exists', state);
         return;
     }
@@ -176,6 +180,8 @@ SceneManager.prototype.load = function(state, clear, preload, create) {
 
     // 清理下旧场景的节点
     self.clearWorld();
+
+    if (clear !== true) clear = false;
     if (clear) self.game.assets.clear();
 
     // 同步下载场景的内容
@@ -211,7 +217,7 @@ SceneManager.prototype.clearWorld = function(shutDown) {
  */
 SceneManager.prototype.destroy = function() {
     this.entry = undefined;
-    this.list = {};
+    this.list = [];
     this.phaser.destroy();
 };
 
@@ -220,12 +226,15 @@ SceneManager.prototype.destroy = function() {
  * @private
  */
 SceneManager.prototype._parse = function() {
-    var key = this.list[this.current];
+    var key = this.current + '.bin';
     var asset = this.game.assets.find(key);
     // 如果资源加载失败asset会为空
     if (asset) {
         var json = asset.json.data;
         this.game.serializer.restoreState(json);
         this.game.world._prefab = key;
+    }
+    else {
+        self.game.log.error('Can not find scene {0} from assets', state);
     }
 };
