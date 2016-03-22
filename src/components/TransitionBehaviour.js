@@ -241,7 +241,9 @@ TransitionBehaviour.prototype._saveTexture = function(v, context) {
 TransitionBehaviour.prototype._restoreTexture = function(v, context) {
     if (v && v.length && v[0] === qc.Serializer.STRING) {
         // 兼容旧版本
-        if (context.gameObject.texture)
+        var texture = context.gameObject.texture;
+        if (texture &&
+            texture.atlas.frameNames.indexOf(v[1]) >= 0)
             return context.gameObject.texture.atlas.getTexture(v[1]);
         return null;
     }
