@@ -470,13 +470,18 @@ var AssetUtil = qc.AssetUtil = {
         xhr.open('GET', url, true);
         xhr.responseType = 'text';
 
-        xhr.onload = function(){
-            return onload(xhr.responseText);
-        }
-
-        xhr.onerror = function(){
-            if (onerror) onerror(xhr);
-        }
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    onload(xhr.responseText);
+                }
+                else {
+                    if (onerror) onerror(xhr);
+                }
+            }
+            else {
+            }
+        };
 
         xhr.send();
     },
@@ -488,13 +493,18 @@ var AssetUtil = qc.AssetUtil = {
         xhr.open('POST', url, true);
         xhr.responseType = 'text';
 
-        xhr.onload = function(){
-            return onload(xhr.responseText);
-        }
-
-        xhr.onerror = function(){
-            if (onerror) onerror(xhr);
-        }
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    onload(xhr.responseText);
+                }
+                else {
+                    if (onerror) onerror(xhr);
+                }
+            }
+            else {
+            }
+        };
 
         xhr.send(strData);
     },
