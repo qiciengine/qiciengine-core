@@ -161,6 +161,9 @@ Action.prototype.removeProperty = function(path, propertyId) {
     propertyOb.destroy();
     delete this.propertyList[key];
     this.refreshActionList();
+
+    // 重新刷新时长
+    this.duration = this.getDuration(true, true);
 };
 
 // 取得指定 property 的信息

@@ -246,8 +246,14 @@ ActionManager.prototype.addAction = function(actionInfo) {
     var duration = action.getDuration();
     if (duration === qc.MAX_DURATION)
         self.duration = duration;
-    else if (self.duration < time + duration)
-        self.duration = time + duration;
+    else
+    {
+        var amSamples = self.samples;
+        var samples = action.samples;
+        duration = duration * amSamples / samples;
+        if (self.duration < time + duration)
+            self.duration = time + duration;
+    }
 
     return index;
 };
@@ -269,7 +275,12 @@ ActionManager.prototype.deleteAction = function(index) {
         if (duration === qc.MAX_DURATION)
             preTime = qc.MAX_DURATION;
         else
+        {
+            var amSamples = self.samples;
+            var samples = action.samples;
+            duration = duration * amSamples / samples;
             preTime = self.actionList[index][0] + duration;
+        }
         action.destroy();
     }
     delete self.actionList[index];
@@ -286,6 +297,9 @@ ActionManager.prototype.updateActionTime = function(index, time) {
         return;
 
     actionInfo[0] = time;
+
+    // 刷新时长
+    self.getDuration(true);
 };
 
 // 取得 action 时长
@@ -303,8 +317,14 @@ ActionManager.prototype.getDuration = function(recalc, singleLoop) {
             var time = actionInfo[0];
             if (value === qc.MAX_DURATION)
                 duration = qc.MAX_DURATION;
-            else if (duration < time + value)
-                duration = time + value;
+            else
+            {
+                var amSamples = this.samples;
+                var samples = actionInfo[1].samples;
+                value = value * amSamples / samples;
+                if (duration < time + value)
+                    duration = time + value;
+            }
         }
         this.duration = duration;
     }
