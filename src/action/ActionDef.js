@@ -89,6 +89,9 @@ qc.ActionProperties[qc.PROP_ALPHA] = {
             {
                 attrib: 'alpha',
                 type: Serializer.NUMBER,
+                min: 0,
+                max: 1,
+                precision: 2,
             },
         ],
 };
