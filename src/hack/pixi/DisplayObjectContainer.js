@@ -44,7 +44,7 @@ PIXI.DisplayObjectContainer.prototype._renderWebGL = function(renderSession)
             renderSession.maskManager.pushMask(this.mask, renderSession);
             renderSession.spriteBatch.start();
         }
-        
+
         if (this._renderSelfWebGL) {
             skipRenderChildren = this._renderSelfWebGL(renderSession);
         }
@@ -54,7 +54,7 @@ PIXI.DisplayObjectContainer.prototype._renderWebGL = function(renderSession)
             for (i = 0; i < this.children.length; i++)
             {
                 this.children[i]._renderWebGL(renderSession);
-            }    
+            }
         }
 
         renderSession.spriteBatch.stop();
@@ -75,7 +75,7 @@ PIXI.DisplayObjectContainer.prototype._renderWebGL = function(renderSession)
             for (i = 0; i < this.children.length; i++)
             {
                 this.children[i]._renderWebGL(renderSession);
-            }    
+            }
         }
     }
     if (this.softClip) {
@@ -113,7 +113,7 @@ PIXI.DisplayObjectContainer.prototype._renderCanvas = function(renderSession)
         for (var i = 0; i < this.children.length; i++)
         {
             this.children[i]._renderCanvas(renderSession);
-        }   
+        }
     }
 
     if (this._mask)
@@ -210,8 +210,16 @@ PIXI.DisplayObjectContainer.prototype.removeChildAt = function(index)
     child.parent = undefined;
     this.children.splice( index, 1 );
     this._qc && this._qc._dispatchChildrenChanged('remove', [child._qc]);
-    
+
     return child;
+};
+
+/**
+ * 提供 remove 方法，这样节点移除的时候就不需要判断 if remove then remove else removeChild
+ */
+PIXI.DisplayObjectContainer.prototype.remove = function(child)
+{
+    return this.removeChild(child);
 };
 
 /**

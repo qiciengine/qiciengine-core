@@ -33,7 +33,7 @@ var GraphicsTexture = qc.Filter.GraphicsTexture = function(game, width, height, 
      */
     self._graphics = self.game.phaser.add.graphics(0, 0);
     if (self._graphics.parent) {
-        self._graphics.parent.removeChild(self._graphics);
+        self._graphics.parent.remove(self._graphics);
     }
 };
 
@@ -69,7 +69,7 @@ GraphicsTexture.prototype.updateTexture = function() {
         texture = self._texture,
         g = self._graphics;
     if (g.dirty) {
-        texture.directRenderWebGL(g, self.offset, true);    
+        texture.directRenderWebGL(g, self.offset, true);
     }
 };
 

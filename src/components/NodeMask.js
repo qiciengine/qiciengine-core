@@ -15,7 +15,7 @@ var NodeMask = defineBehaviour('qc.NodeMask', qc.Behaviour, function() {
      */
     this._mask = this.gameObject.game.phaser.add.graphics(0, 0);
     if (this._mask.parent) {
-        this._mask.parent.removeChild(this._mask);
+        this._mask.parent.remove(this._mask);
     }
     // this.gameObject.phaser.addChild(this._mask);
 
@@ -148,7 +148,7 @@ Object.defineProperties(NodeMask.prototype, {
             if (!this._customGraphics) {
                 this._customGraphics = this.game.phaser.add.graphics(0, 0);
                 if (this._customGraphics.parent) {
-                    this._customGraphics.parent.removeChild(this._customGraphics);
+                    this._customGraphics.parent.remove(this._customGraphics);
                 }
             }
             return this._customGraphics;
@@ -231,8 +231,8 @@ NodeMask.prototype._doTransformChanged = function() {
 };
 
 NodeMask.prototype._isNeedUseClipReplaceStencil = function() {
-    return !this.game.device.phaser.supportStencil && 
-        this.game.phaser.renderType === Phaser.WEBGL && 
+    return !this.game.device.phaser.supportStencil &&
+        this.game.phaser.renderType === Phaser.WEBGL &&
         this.clipType === NodeMask.CLIP_STENCIL;
 };
 
@@ -246,7 +246,7 @@ NodeMask.prototype._refresh = function() {
         this.gameObject.phaser.mask = null;
         this.gameObject.phaser.maskPixel = null;
         this._graphicsFilter.otherTexture.updateTexture();
-        this.gameObject.phaser._graphicsFilter = this.enable ? 
+        this.gameObject.phaser._graphicsFilter = this.enable ?
             { target: this.gameObject.phaser, filterPasses: this._graphicsFilter.passes} :
             null;
     }
@@ -383,9 +383,9 @@ NodeMask.prototype._updateMask = function() {
     if (maxRotation - minRotation >= Math.PI * 2) {
         // 围绕一圈了
         vertexes = [
-            new qc.Point(minX, minY), 
+            new qc.Point(minX, minY),
             new qc.Point(maxX, minY),
-             new qc.Point(maxX, maxY), 
+             new qc.Point(maxX, maxY),
              new qc.Point(minX, maxY)];
     }
     else {
