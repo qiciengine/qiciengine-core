@@ -16,7 +16,7 @@ var CacheAsBitmap = defineBehaviour('qc.CacheAsBitmap', qc.Behaviour, function()
     // 缓存是否需要更新
     this._dirty = true;
 
-    // 是否限制缓存区域大小 
+    // 是否限制缓存区域大小
     this.boundsInScreen = false;
 
     // 编辑器模式下需要执行
@@ -83,7 +83,8 @@ Object.defineProperties(CacheAsBitmap.prototype,{
 CacheAsBitmap.prototype.awake = function() {
     var self = this,
         o = self.gameObject;
-    self.game.assets.webFontLoaded.addOnce(self._setDirty, self);
+
+    self.addListener(self.game.assets.webFontLoaded, self._setDirty, self);
     o.onRelayout.add(self._setDirty, self);
 };
 
@@ -113,7 +114,7 @@ CacheAsBitmap.prototype.onEnable = function() {
     // 替换绘制函数
     if (!self._nodeRenderCanvas) {
         self._nodeRenderCanvas = self.gameObject.phaser._renderCanvas;
-        self.gameObject.phaser._renderCanvas = self.renderCanvas.bind(self);    
+        self.gameObject.phaser._renderCanvas = self.renderCanvas.bind(self);
     }
 
     if (!self._nodeRenderWebGL) {
@@ -175,7 +176,7 @@ CacheAsBitmap.prototype._updateCache = function() {
     var bounds = null;
     if (this._cacheType !== CacheAsBitmap.CACHE_FOR_SCREEN)
         bounds = self._cacheBounds = self.getLocalBounds();
-    else 
+    else
         bounds = self._cacheBounds = self.getBounds();
 
     if (self.boundsInScreen) {
@@ -192,13 +193,13 @@ CacheAsBitmap.prototype._updateCache = function() {
 
         // 将宽高整数化
         bounds.width = Math.round(Math.max(1, Math.min(self.game.width * self.game.resolution - bounds.x, bounds.width)));
-        bounds.height = Math.round(Math.max(1, Math.min(self.game.height * self.game.resolution - bounds.y, bounds.height)));    
+        bounds.height = Math.round(Math.max(1, Math.min(self.game.height * self.game.resolution - bounds.y, bounds.height)));
     }
     else {
         bounds.width = Math.round(bounds.width);
         bounds.height = Math.round(bounds.height);
     }
-    
+
     // 这里将缓存的宽高修改为2的倍数，在部分机型的uc浏览器中，如果创建的canvas为奇数，会导致无法显示
     cache.resize(bounds.width + (bounds.width & 1), bounds.height + (bounds.height & 1), true);
     var wt = self.gameObject.worldTransform;
@@ -251,7 +252,7 @@ CacheAsBitmap.prototype._updateCache = function() {
  */
 CacheAsBitmap.prototype.postUpdate = function() {
     var self = this,
-        sprite = self._cacheSprite; 
+        sprite = self._cacheSprite;
     if (self.dirty) {
         self.game.log.trace('[CacheAsBitmap]Update Cache.');
         self._updateCache();
@@ -314,7 +315,7 @@ CacheAsBitmap.prototype.getLocalBounds = function() {
  * @param renderSession
  */
 CacheAsBitmap.prototype.renderCanvas = function(renderSession) {
-    var self = this, 
+    var self = this,
         go = self.gameObject;
     if (go.phaser.visible === false || go.renderable === false)
         return;
@@ -331,7 +332,7 @@ CacheAsBitmap.prototype.renderCanvas = function(renderSession) {
  * @param renderSession
  */
 CacheAsBitmap.prototype.renderWebGL = function(renderSession){
-    var self = this, 
+    var self = this,
         go = self.gameObject;
     if (go.phaser.visible === false || go.renderable === false)
         return;
