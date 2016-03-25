@@ -12,7 +12,7 @@ var DirtyRectangle = qc.DirtyRectangle = function(game) {
      * 全局脏矩形
      * @type {Array}
      */
-    self._destoryRegion = [];
+    self._destroyRegion = [];
 
     self.game = game;
     self.game.world.getSelfWidth = function() {
@@ -74,7 +74,7 @@ Object.defineProperties(DirtyRectangle.prototype, {
  */
 DirtyRectangle.prototype.redirectDirty = function(bounds) {
     var self = this;
-    self._enable && bounds && self._destoryRegion.push(bounds);
+    self._enable && bounds && self._destroyRegion.push(bounds);
 };
 
 /**
@@ -254,9 +254,9 @@ DirtyRectangle.prototype.updateDirtyRegion = function(context, resolution, stage
         stage._displayChangeStatus = -1;
     }
     var dirtyRegion = self._currDirtyRegion = self.collectDirtyRegion(null, stage);
-    if (self._destoryRegion) {
-        Array.prototype.push.apply(dirtyRegion, self._destoryRegion);
-        self._destoryRegion = [];
+    if (self._destroyRegion) {
+        Array.prototype.push.apply(dirtyRegion, self._destroyRegion);
+        self._destroyRegion = [];
     }
 
     if (self._recalcAll || self.forceDirty) {
@@ -304,7 +304,7 @@ DirtyRectangle.prototype.restore = function(context) {
     var self = this;
     if (self._saveContext) {
         context.restore();
-        self._saveContext = false;    
+        self._saveContext = false;
     }
 };
 
