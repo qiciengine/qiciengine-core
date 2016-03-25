@@ -27,7 +27,7 @@ DisplayChangeStatus.REOFFSET_MASK = DisplayChangeStatus.OFFSET;
 var oldDestroy = PIXI.DisplayObject.prototype.destroy;
 PIXI.DisplayObject.prototype.destroy = function() {
     this.maybeOutWorld();
-    oldDestory.call(this);
+    oldDestroy.call(this);
 };
 
 /**
