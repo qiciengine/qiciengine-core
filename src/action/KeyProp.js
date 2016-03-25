@@ -47,7 +47,8 @@ KeyProp.prototype.fromJson = function(propertyInfo, json) {
         var data = json[i];
         if (!data)
         {
-            this.propMap[attrib] = [ properties[i].type, [], attribArray ];
+            if (!this.propMap[attrib])
+                this.propMap[attrib] = [ properties[i].type, [], attribArray ];
             continue;
         }
         var type = data[0], list = data[1];

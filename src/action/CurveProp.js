@@ -49,6 +49,8 @@ CurveProp.prototype.fromJson = function(propertyInfo, json) {
 
         // 从文件中还原对象的情况
         var data = json[i];
+        if (!data)
+            continue;
         var curve = new qc.BezierCurve();
         this.propMap[attrib] = {
             curveType : data[0],
