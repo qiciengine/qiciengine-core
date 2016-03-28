@@ -73,8 +73,11 @@ var Assets = qc.Assets = function(game, loader, cache) {
 
     // 注册声音解码完成回调
     game.sound.phaser.onSoundDecode.add(function(key, data) {
-        var asset = new qc.SoundAsset(data.key, data.url, self.game.phaser.cache.getSound(key), data.meta);
-        game.assets.cache(data.key, data.url, asset);
+        var soundContent = self.game.phaser.cache.getSound(key);
+        if (soundContent && soundContent.decoded) {
+            var asset = new qc.SoundAsset(data.key, data.url, soundContent, data.meta);
+            game.assets.cache(data.key, data.url, asset);
+        }
 
         data.nextStep();
     });
