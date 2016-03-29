@@ -8,7 +8,7 @@
  *
  * @class qc.BaseInputModule
  * @param {qc.Game} game - 游戏对象
- * @param {qc.Input} input - 输入对戏那个
+ * @param {qc.Input} input - 输入对象
  * @constructor
  */
 var BaseInputModule = qc.BaseInputModule = function(game, input) {

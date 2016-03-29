@@ -100,7 +100,6 @@ module.exports = function (grunt) {
             'src/hack/animation/*.js',
             'src/hack/pixi/WebGLSpriteBatch.js',
             'src/hack/pixi/*.js',
-            'src/hack/particles/arcade/*.js',
             'src/hack/gameobjects/Text.js',
             'src/hack/gameobjects/*.js',
             'src/hack/tilemap/*.js',
