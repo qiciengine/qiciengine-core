@@ -375,11 +375,7 @@ Assets.prototype.load = function() {
     {
         // 非批量加载，直接调用 load，则判断是否还有批量加载的资源未加载，没有的话，将批量下载计数清零
         if (self.batchTotalCount && self.batchCurCount >= self.batchTotalCount)
-        {
-            console.log('load clear key', key, url)
-            self.game.log.error('!!1')
             self.batchTotalCount = self.batchCurCount = 0;
-        }
     }
 
     // preload 时同步加载，之后阶段都错开1ms异步加载。

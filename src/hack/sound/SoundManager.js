@@ -26,7 +26,7 @@ Phaser.SoundManager.prototype.decode = function (key, sound) {
 
             try
             {
-                this.context.decodeAudioData(soundData, function (buffer) {
+                var decodeResult = this.context.decodeAudioData(soundData, function (buffer) {
                     // hack start
                     // 上下文已经发生变化，不需要后续的行为
                     if (!that.game.cache) return;
@@ -36,11 +36,18 @@ Phaser.SoundManager.prototype.decode = function (key, sound) {
                         that.game.cache.decodedSound(key, buffer);
                     }
                     that.onSoundDecode.dispatch(key, sound);
-                }, function(e) {
+                }, function() {
+                    that.game._qc.log.trace('Sound decode failed: {0}', key);
                     that.onSoundDecode.dispatch(key, sound);
-                }).catch(function(e) { });
+                });
+
+                if (decodeResult && decodeResult.catch) {
+                    decodeResult.catch(function() {
+                    });
+                }
             }
             catch (e) {
+                this.game._qc.log.trace('{0}', e.stack);
                 that.onSoundDecode.dispatch(key, sound);
             }
         }
