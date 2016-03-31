@@ -96,7 +96,7 @@ Object.defineProperties(SceneManager.prototype, {
                         catch (e)
                         {
                             self.game.log.error('Parse scene fail：{0}', e);
-                            qc.Util.popupError(e.message); 
+                            qc.Util.popupError(e.message);
                         }
 
                         // 标记当前没有加载场景了
@@ -142,7 +142,9 @@ SceneManager.prototype.download = function(state, callback) {
     var url = state + '.bin';
 
     this.game.log.trace('Start downloading scene:{0}', state);
+    this.game.assets.beginBatchLoad();
     this.game.assets.load(url, url, callback);
+    this.game.assets.endBatchLoad();
 };
 
 /**

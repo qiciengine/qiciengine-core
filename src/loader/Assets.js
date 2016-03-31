@@ -21,6 +21,18 @@ var Assets = qc.Assets = function(game, loader, cache) {
     this._uuid2UrlConf = window.urlMapConfig || {};
     this._uuid2UrlConf['__builtin_resource__'] = '__builtin_resource__';
 
+    // 记录 bin 资源与其资源数的映射
+    this.assetCountMap = window.assetCountMap || {};
+
+    // 批量加载的资源总数
+    this.batchTotalCount = 0;
+
+    // 批量加载已加载的资源数
+    this.batchCurCount = 0;
+
+    // 批量加载的标识
+    this.batchLoadFlag = false;
+
     /**
      * @property {number} maxRetryTimes - 资源下载失败时，最大重试次数
      */
@@ -179,7 +191,8 @@ Object.defineProperties(Assets.prototype, {
      * @readonly
      */
     loaded : {
-        get : function() { return this._loader._loadedFileCount; }
+        get : function() {
+            return this.batchCurCount ? this.batchCurCount : this._loader._loadedFileCount; }
     },
 
     /**
@@ -187,7 +200,8 @@ Object.defineProperties(Assets.prototype, {
      * @readonly
      */
     total : {
-        get : function() { return this._loader._totalFileCount; }
+        get : function() {
+            return this.batchTotalCount ? this.batchTotalCount : this._loader._totalFileCount; }
     }
 });
 
@@ -215,9 +229,11 @@ Assets.prototype.loadBatch = (function(){
         }, item.override, item.isRaw);
     };
     return function(items, callback) {
+        this.beginBatchLoad();
         for (var i = 0; i < items.length; i++) {
             loadItem(this, items[i], items, callback);
         }
+        this.endBatchLoad();
     };
 })();
 
@@ -245,6 +261,18 @@ Assets.prototype._internalLoad = function(assetInfo) {
         	(!asset.hasUnloadedDependence || !asset.hasUnloadedDependence(this.game))) {
             // 更新下URL映射
             self._keyUrl[assetInfo.key] = url;
+
+            if (assetInfo.key !== '__builtin_resource__' &&
+                self.batchTotalCount && self.batchCurCount < self.batchTotalCount)
+            {
+                // 批量加载中，累加已加载的资源数
+                if (!assetInfo.inPrefab)
+                {
+                    self.batchCurCount += 1;
+                    self.game.log.trace('Asset {0} load from cache: {1} / {2}', url, self.batchCurCount, self.batchTotalCount);
+                }
+            }
+
             if (assetInfo.callback)
                 assetInfo.callback(asset);
             return;
@@ -337,6 +365,23 @@ Assets.prototype.load = function() {
         inPrefab: inPrefab,
     };
 
+    if (self.batchLoadFlag && key !== '__builtin_resource__')
+    {
+        // 如果在批量加载中，则累加批量加载的资源总数
+        var assetCount = self.assetCountMap[url] || 1;
+        self.batchTotalCount += assetCount;
+    }
+    else if (!self.batchLoadFlag && key !== '__builtin_resource__')
+    {
+        // 非批量加载，直接调用 load，则判断是否还有批量加载的资源未加载，没有的话，将批量下载计数清零
+        if (self.batchTotalCount && self.batchCurCount >= self.batchTotalCount)
+        {
+            console.log('load clear key', key, url)
+            self.game.log.error('!!1')
+            self.batchTotalCount = self.batchCurCount = 0;
+        }
+    }
+
     // preload 时同步加载，之后阶段都错开1ms异步加载。
     // 这个问题最好的解决方案本应是干掉 Img 的缓存同步加载机制，但是我们不想hack进phaser代码。
     // 具体问题是：
@@ -355,6 +400,18 @@ Assets.prototype.load = function() {
     }
 };
 
+// 开始批量下载，与 endBatchLoad 配对使用，用于累加 load 的资源总数
+Assets.prototype.beginBatchLoad = function() {
+    this.batchLoadFlag = true;
+    this.batchTotalCount = 0;
+    this.batchCurCount = 0;
+}
+
+// 结束批量下载，与 beginBatchLoad 配对使用
+Assets.prototype.endBatchLoad = function() {
+    this.batchLoadFlag = false;
+}
+
 /**
  * @param uuid
  * @param callback
@@ -362,9 +419,20 @@ Assets.prototype.load = function() {
  * @internal
  */
 Assets.prototype.loadByUUID = function(uuid, callback, override, inPrefab) {
+    var self = this;
     var url = this._uuid2UrlConf[uuid];
     if (!url) {
         this.game.log.important('UUID({0}) not found.', uuid);
+
+        if (self.batchTotalCount && self.batchCurCount < self.batchTotalCount)
+        {
+            // 批量加载中，累加已加载的资源数
+            if (!inPrefab)
+            {
+                self.batchCurCount += 1;
+                self.game.log.trace('Asset {0} load failed: {1} / {2}', uuid, self.batchCurCount, self.batchTotalCount);
+            }
+        }
         if (callback) callback();
         return;
     }
@@ -377,6 +445,7 @@ Assets.prototype.loadByUUID = function(uuid, callback, override, inPrefab) {
  * @param img 原始图片url地址或者 image对象
  */
 Assets.prototype.loadTexture = function() {
+    var self = this;
     var key, url, img, callback;
     if (arguments.length === 1) {
         if (typeof arguments[0] === 'string') {
@@ -425,13 +494,20 @@ Assets.prototype.loadTexture = function() {
             throw new Error('key cannot be null.');
             return;
         }
-        this._keyUrl[key] = key;
-        var atlas = AssetUtil.addAtlasFromImage(this.game, key, key, img);
+        self._keyUrl[key] = key;
+        var atlas = AssetUtil.addAtlasFromImage(self.game, key, key, img);
+
+        if (self.batchTotalCount && self.batchCurCount < self.batchTotalCount)
+        {
+            // 批量加载中，累加已加载的资源数
+            self.batchCurCount += 1;
+            self.game.log.trace('Asset {0} loaded: {1} / {2}', key, self.batchCurCount, self.batchTotalCount);
+        }
         callback(atlas);
     }
     else {
         // 走标准的加载流程，指明为raw
-        this.load(key, url, callback, false, true);
+        self.load(key, url, callback, false, true);
     }
 };
 
@@ -680,6 +756,19 @@ Assets.prototype._callCb = function(key, asset, assetInfo) {
             if (!assetsInfo.inPrefab)
                 // 预制中的资源不通知进度，整个预制加载成功通知一次即可
                 self.game.loadingProcessCallback(key, asset, assetsInfo);
+        }
+
+        if (self.batchTotalCount && self.batchCurCount < self.batchTotalCount)
+        {
+            // 批量加载中，累加已加载的资源数
+            if (!assetsInfo.inPrefab)
+            {
+                self.batchCurCount += 1;
+                if (asset)
+                    self.game.log.trace('Asset {0} loaded: {1} / {2}', key, self.batchCurCount, self.batchTotalCount);
+                else
+                    self.game.log.trace('Asset {0} load failed: {1} / {2}', key, self.batchCurCount, self.batchTotalCount);
+            }
         }
 
         if (assetsInfo.callback)
