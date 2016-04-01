@@ -428,7 +428,7 @@ Object.defineProperties(UIText.prototype, {
     overflow : {
         get : function() {
             var script = this.getScript('qc.NodeMask');
-            if (script && !script.enable) return true;
+            if (!script || !script.enable) return true;
             return false;
         },
         set : function(v) {
@@ -1067,7 +1067,6 @@ UIText.prototype.getMeta = function() {
     json.strokeThickness = Serializer.NUMBER;
     json.glowColor = Serializer.COLOR;
     json.autoSize = Serializer.BOOLEAN;
-    json.overflow = Serializer.BOOLEAN;
     json.shadowColor = Serializer.COLOR;
     json.shadowBlur = Serializer.NUMBER;
     json.shadowOffsetX = Serializer.NUMBER;

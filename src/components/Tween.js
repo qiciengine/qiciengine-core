@@ -200,8 +200,12 @@ Object.defineProperties(Tween.prototype, {
  */
 Tween.prototype.awake = function() {
     var self = this;
-    self.enable = false;
 
+    // 已经被人激活了
+    if (self._started) return;
+
+    // 默认未激活行为
+    self.enable = false;
     if (self.playOnAwake) {
         self.resetToBeginning();
         self.playForward();

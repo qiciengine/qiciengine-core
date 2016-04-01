@@ -86,7 +86,7 @@ Phaser.RequestAnimationFrame.prototype.updateSetTimeout = function() {
         phaser_updateSetTimeout.call(this);
     }
     catch (e) {
-        this.game._qc.log.error('Error：{0}', e);
+        this.game._qc.log.error('Error：{0}', e.stack);
     }
 };
 var phaser_updateRAF = Phaser.RequestAnimationFrame.prototype.updateRAF;
@@ -95,7 +95,7 @@ Phaser.RequestAnimationFrame.prototype.updateRAF = function(rafTime) {
         phaser_updateRAF.call(this, rafTime);
     }
     catch (e) {
-        this.game._qc.log.error('Error：{0}', e);
+        this.game._qc.log.error('Error：{0}', e.stack);
     }
 };
 

@@ -13,17 +13,18 @@
 var Storage = qc.Storage = function(game) {
     this.game = game;
     this.restore();
-}
+};
+
 Storage.prototype = {};
 Storage.prototype.constructor = Storage;
 
 Object.defineProperties(Storage.prototype, {
     /**
-     * 本游戏使用的唯一标识符，采用BundleIdentifier
+     * 本地数据存储标志符
      */
     key : {
         get : function() {
-            return this.game.bundleIdentifier;
+            return this.game.localStorageID;
         }
     }
 });
@@ -39,7 +40,7 @@ Storage.prototype.restore = function() {
     else {
         this._data = {};
     }
-}
+};
 
 /**
  * 保存所有数据
@@ -47,18 +48,18 @@ Storage.prototype.restore = function() {
 Storage.prototype.save = function() {
     var key = this.key;
     if (!key || key === 'com.DefaultCompany.Default') {
-        throw new Error('game.bundleIdentifier should be set for local storage');
+        throw new Error('game.localStorageID should be set for local storage');
     }
     var str = JSON.stringify(this._data);
     window.localStorage.setItem(this.key, str);
-}
+};
 
 /**
  * 保存一条记录
  */
 Storage.prototype.set = function(k, v) {
     this._data[k] = v;
-}
+};
 
 /**
  * 删除一条记录
@@ -66,7 +67,7 @@ Storage.prototype.set = function(k, v) {
 Storage.prototype.del = function(k) {
     if (this._data[k])
         delete this._data[k];
-}
+};
 
 /**
  * 检索一条记录
@@ -74,4 +75,4 @@ Storage.prototype.del = function(k) {
 Storage.prototype.get = function(k) {
     if (this._data[k])
         return this._data[k];
-}
+};

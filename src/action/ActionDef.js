@@ -6,6 +6,9 @@
  *  action 系统相关定义
  */
 
+// 最大的动作时长
+qc.MAX_DURATION = 0xFFFFFFFF;
+
 // 曲线数值类型
 qc.CURVE_TYPE_RELATIVE = 1;
 qc.CURVE_TYPE_ABSOLUTE = 2;
@@ -86,6 +89,9 @@ qc.ActionProperties[qc.PROP_ALPHA] = {
             {
                 attrib: 'alpha',
                 type: Serializer.NUMBER,
+                min: 0,
+                max: 1,
+                precision: 2,
             },
         ],
 };

@@ -160,7 +160,7 @@ FilterGroup.prototype.addFilter = function(obj, idx) {
     }
 
     if (typeof obj === 'function') {
-        obj = new obj();
+        obj = new obj(this.game);
     }
     else {
         var idx = this.filters.length;

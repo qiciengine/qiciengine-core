@@ -278,7 +278,7 @@ Serializer.prototype._restoreFilterItem = function(value) {
         return;
     }
     var uniforms = value[2];
-    var filter = new cls();
+    var filter = new cls(this.game);
     var extra = filter.getExtraUniforms();
     for (var name in extra) {
         var type = extra[name];

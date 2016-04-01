@@ -49,7 +49,8 @@ var ScaleAdapter = defineBehaviour('qc.ScaleAdapter', qc.Behaviour, function() {
     fullTarget : qc.Serializer.BOOLEAN,
     gameObjectRecord : qc.Serializer.NUMBERS
 });
-ScaleAdapter.__menu = 'UI/ScaleAdapter';
+
+ScaleAdapter.__hiddenInMenu = true;
 
 Object.defineProperties(ScaleAdapter.prototype,{
     /**

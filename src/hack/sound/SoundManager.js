@@ -12,12 +12,9 @@
  * @param {Phaser.Sound} [sound] - Its buffer will be set to decoded data.
  */
 Phaser.SoundManager.prototype.decode = function (key, sound) {
-
     sound = sound || null;
 
     var soundData = this.game.cache.getSoundData(key);
-
-    // console.log(key, 'soundData', soundData);
 
     if (soundData)
     {
@@ -27,18 +24,32 @@ Phaser.SoundManager.prototype.decode = function (key, sound) {
 
             var that = this;
 
-            this.context.decodeAudioData(soundData, function (buffer) {
-                // hack start
-                // 上下文已经发生变化，不需要后续的行为
-                if (!that.game.cache) return;
-                // hack end
+            try
+            {
+                var decodeResult = this.context.decodeAudioData(soundData, function (buffer) {
+                    // hack start
+                    // 上下文已经发生变化，不需要后续的行为
+                    if (!that.game.cache) return;
+                    // hack end
 
-                if (buffer)
-                {
-                    that.game.cache.decodedSound(key, buffer);
+                    if (buffer) {
+                        that.game.cache.decodedSound(key, buffer);
+                    }
                     that.onSoundDecode.dispatch(key, sound);
+                }, function() {
+                    that.game._qc.log.trace('Sound decode failed: {0}', key);
+                    that.onSoundDecode.dispatch(key, sound);
+                });
+
+                if (decodeResult && decodeResult.catch) {
+                    decodeResult.catch(function() {
+                    });
                 }
-            });
+            }
+            catch (e) {
+                this.game._qc.log.trace('{0}', e.stack);
+                that.onSoundDecode.dispatch(key, sound);
+            }
         }
     }
 };
@@ -91,9 +102,9 @@ Phaser.SoundManager.prototype.boot = function () {
                 this.context = null;
                 this.usingWebAudio = false;
                 this.noAudio = true;
-                
+
                 console.error('SoundManager boot error!', error);
-                qc.Util.popupError(error.message); 
+                qc.Util.popupError(error.message);
             }
         }
         else if (!!window['webkitAudioContext'])
@@ -104,9 +115,9 @@ Phaser.SoundManager.prototype.boot = function () {
                 this.context = null;
                 this.usingWebAudio = false;
                 this.noAudio = true;
-                
+
                 console.error('SoundManager boot error!', error);
-                qc.Util.popupError(error.message); 
+                qc.Util.popupError(error.message);
             }
         }
     }
@@ -196,7 +207,7 @@ Phaser.SoundManager.prototype.update = function () {
                 this.touchLocked = false;
                 this._unlockSource = null;
                 this.game.input._qc.touch.callbackContext = null;
-                
+
                 // iOS9下必须在touchEnd进行unlock
                 // https://github.com/photonstorm/phaser/commit/f64fc42f3e28c8f02562234ad8d09fd9d49fd24a
                 if (this.game.device.iOSVersion > 8) {
@@ -204,7 +215,7 @@ Phaser.SoundManager.prototype.update = function () {
                 }
                 else {
                     this.game.input._qc.touch.touchStartCallback = null;
-                }                
+                }
             }
         }
     }

@@ -190,11 +190,11 @@ Object.defineProperties(ProgressBar.prototype, {
      */
     fixedSize : {
         get : function() { return this._fixedSize; },
-        set : function(value) { 
+        set : function(value) {
             if (this._fixedSize === value) {
                 return;
             }
-            this._fixedSize = value; 
+            this._fixedSize = value;
             // 更新
             this._updateSliders();
         }
@@ -355,7 +355,6 @@ ProgressBar.prototype.getMeta = function() {
     json.loopTime = qc.Serializer.NUMBER;
     json.numberOfStep = qc.Serializer.NUMBER;
     json.fixedSize = qc.Serializer.NUMBER;
-    json.clipSliders = qc.Serializer.BOOLEAN;
     json.showMode = qc.Serializer.NUMBER;
     json.reverse = qc.Serializer.NUMBER;
     return json;

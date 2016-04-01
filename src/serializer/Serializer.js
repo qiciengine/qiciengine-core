@@ -143,9 +143,13 @@ Serializer.prototype.restoreBundle = function(json, parent, restoreChild) {
     if (ob.getMeta)
         meta = ob.getMeta();
     var data = json.data;
+
     for (var k in meta) {
+        if (k === 'scripts')
+            continue;
         this.fromJson(ob, data, k, meta[k]);
     }
+    if (meta.scripts) this.fromJson(ob, data, 'scripts', meta.scripts);
 
     // 派发node的反序列化完成事件
     if (ob.onDeserialized)
@@ -495,7 +499,7 @@ Serializer.prototype.fromJson = function(ob, json, key, type) {
                 if (value[1][i][0] === Serializer.ACTION)
                     list.push(this._restoreActionItem(value[1][i]));
                 else if (value[1][i][0] === Serializer.ACTIONMANAGER)
-                    list.push(this._restoreActionItem(value[1][i]));
+                    list.push(this._restoreActionManagerItem(value[1][i]));
             }
         }
         ob[key] = list;

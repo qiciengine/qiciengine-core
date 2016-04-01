@@ -68,10 +68,8 @@ qc.Util = {
      * @param html 需要设置其Transform信息的html元素
      */
     updateTransform: function(node, html){
-        var game = node.game;
+        var game = node.game;        
         var scaleFactor = game.phaser.scale.scaleFactorInversed;
-        var canvasRect = game.canvas.getBoundingClientRect();
-        var parentRect = game.canvas.parentNode.getBoundingClientRect();
         var style = html.style;
         var rect = node.rect;
         var worldTransform = node.worldTransform;

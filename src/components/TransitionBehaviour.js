@@ -20,36 +20,27 @@ var TransitionBehaviour = qc.defineBehaviour('qc.TransitionBehaviour', qc.Behavi
     target : qc.Serializer.NODE,
     _transition : qc.Serializer.NUMBER,
     _normalTexture : {
-        get: function(ob, context) { return ob._normalTexture; },
+        get: function(ob, context) {
+            return this._saveTexture(ob._normalTexture, context);
+        },
         set: function(context, v) {
-            if (typeof v === 'string') {
-                // 兼容旧版本
-                if (context.gameObject.texture) v = context.gameObject.texture.atlas.getTexture(v);
-                else v = null;
-            }
-            if (v instanceof qc.Texture) this._normalTexture = v;
+            this._normalTexture = this._restoreTexture(v, context);
         }
     },
     _pressedTexture : {
-        get: function(ob, context) { return ob._pressedTexture; },
+        get: function(ob, context) {
+            return this._saveTexture(ob._pressedTexture, context);
+        },
         set: function(context, v) {
-            if (typeof v === 'string') {
-                // 兼容旧版本
-                if (context.gameObject.texture) v = context.gameObject.texture.atlas.getTexture(v);
-                else v = null;
-            }
-            if (v instanceof qc.Texture) this._pressedTexture = v;
+            this._pressedTexture = this._restoreTexture(v, context);
         }
     },
     _disabledTexture : {
-        get: function(ob, context) { return ob._disabledTexture; },
+        get: function(ob, context) {
+            return this._saveTexture(ob._disabledTexture, context);
+        },
         set: function(context, v) {
-            if (typeof v === 'string') {
-                // 兼容旧版本
-                if (context.gameObject.texture) v = context.gameObject.texture.atlas.getTexture(v);
-                else v = null;
-            }
-            if (v instanceof qc.Texture) this._disabledTexture = v;
+            this._disabledTexture = this._restoreTexture(v, context);
         }
     },
     _normalColor : qc.Serializer.COLOR,
@@ -235,6 +226,29 @@ TransitionBehaviour.prototype.awake = function() {
 
     // 立刻重新绘制下
     this._reset();
+};
+
+/**
+ * 序列化贴图
+ */
+TransitionBehaviour.prototype._saveTexture = function(v, context) {
+    return this.gameObject.game.serializer._saveTextureItem(v, context);
+};
+
+/**
+ * 反序列化贴图
+ */
+TransitionBehaviour.prototype._restoreTexture = function(v, context) {
+    if (v && v.length && v[0] === qc.Serializer.STRING) {
+        // 兼容旧版本
+        var texture = context.gameObject.texture;
+        if (texture &&
+            texture.atlas.frameNames.indexOf(v[1]) >= 0)
+            return context.gameObject.texture.atlas.getTexture(v[1]);
+        return null;
+    }
+    else
+        return this.gameObject.game.serializer._restoreTextureItem(v);
 };
 
 /**

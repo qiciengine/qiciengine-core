@@ -136,17 +136,6 @@ Object.defineProperties(State.prototype, {
     },
 
     /**
-     * @property {qc.Particles} particles - 使用的粒子系统
-     */
-    'particles' : {
-        get : function()  { return this.phaser.particles._qc; },
-        set : function(v) {
-            this.phaser.particles = v.phaser;
-            v.phaser._qc = v;
-        }
-    },
-
-    /**
      * @property {qc.Physics} physics - 使用的物理系统
      */
     'physics' : {

@@ -822,7 +822,6 @@ Game.prototype.updateLogic = function(timeStep) {
         phaser.tweens.update(timeStep);
         phaser.sound.update();
         phaser.physics.update();
-        phaser.particles.update();
         phaser.plugins.update();
         this.debug.update += this.time.now - now;
         now = Date.now();

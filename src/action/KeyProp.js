@@ -10,9 +10,6 @@ var KeyProp = qc.KeyProp = function(action, path, propertyId) {
 
     var self = this;
     qc.Prop.call(self, action, path, propertyId);
-
-    // 关键帧序号映射
-    self.keyIndexMap = {};
 };
 KeyProp.prototype = Object.create(qc.Prop.prototype);
 KeyProp.prototype.constructor = KeyProp;
@@ -50,7 +47,8 @@ KeyProp.prototype.fromJson = function(propertyInfo, json) {
         var data = json[i];
         if (!data)
         {
-            this.propMap[attrib] = [ properties[i].type, [], attribArray ];
+            if (!this.propMap[attrib])
+                this.propMap[attrib] = [ properties[i].type, [], attribArray ];
             continue;
         }
         var type = data[0], list = data[1];
