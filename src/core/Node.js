@@ -422,6 +422,10 @@ Node.prototype.removeScript = function(script) {
     if (this[script._key] && this[script._key].uuid === script.uuid)
         // 将旧的应用移除
         delete this[script._key];
+
+    if (this.__json && this.__json[script.uuid])
+        // 将旧的序列化数据删除
+        delete this.__json[script.uuid];
 };
 
 /**
@@ -705,7 +709,7 @@ Node.prototype.onDestroy = function() {
 
     // 通知phaser析构
     this.game.nodePool.remove(this.uuid);
-    
+
 };
 
 /**
