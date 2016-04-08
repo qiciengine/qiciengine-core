@@ -36,6 +36,9 @@ var ActionState = qc.ActionState = function(game) {
     // 该 action 的时长
     self.duration = 0;
 
+    // 速度
+    self.speed = 1;
+
     // 开始时间
     self.startTime = 0;
 
@@ -215,6 +218,9 @@ ActionState.buildBundle = function(ob) {
     // 打包 samples
     content.samples = ob.samples;
 
+    // 打包 speed
+    content.speed = ob.speed;
+
     // 打包 playEventInEditor
     content.playEventInEditor = ob.playEventInEditor;
 
@@ -264,6 +270,9 @@ ActionState.restoreBundle = function(action, asset, inEditor) {
 
     // 还原 samples
     action.samples = json.samples || 60;
+
+    // 还原 speed
+    action.speed = json.speed || 1;
 
     // 还原 playEventInEditor
     action.playEventInEditor = typeof(json.playEventInEditor) === 'boolean' ? json.playEventInEditor : true;

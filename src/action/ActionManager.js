@@ -171,11 +171,11 @@ ActionManager.prototype.update = function(deltaTime, isBegin, inEditor, forceUpd
             var elapsedFrame = this.elapsedFrame - this.duration;
             while(elapsedFrame >= this.duration)
                 elapsedFrame = elapsedFrame - this.duration;
-            deltaTime = elapsedFrame / this.samples * 1000;
+            deltaTime = elapsedFrame / (this.samples * this.speed) * 1000;
             this.reset();
             var setStartTime = function(action, time, deltaTime) {
                 action.startTime = time;
-                var deltaFrame = deltaTime * action.samples / 1000;
+                var deltaFrame = deltaTime * action.samples * action.speed / 1000;
                 if (action.duration < deltaFrame)
                     // 若子 action 的时长少于 deltaFrame，则将 elapsedFrame 设置为 deltaFrame
                     action.elapsedFrame = deltaFrame;
@@ -205,13 +205,14 @@ ActionManager.prototype.update = function(deltaTime, isBegin, inEditor, forceUpd
         deltaTime = 0;
 
     var preElapsedTime = isBegin ? -1 : this.elapsedFrame;
-    this.elapsedFrame += deltaTime / 1000 * this.samples;
+    this.elapsedFrame += deltaTime / 1000 * this.samples * this.speed;
 
     // 判断是否触发动画帧事件
     if (this.eventList.length > 0 && !(inEditor && !this.playEventInEditor))
         this.triggerEvent(preElapsedTime);
 
     // 更新属性
+    deltaTime = deltaTime * this.speed;
     for (var i = 0; i < this.actionList.length; i++)
     {
         var actionInfo = this.actionList[i];
