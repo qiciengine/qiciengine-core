@@ -240,6 +240,8 @@ ActionManager.prototype.addAction = function(actionInfo) {
 
     var time = actionInfo[0], action = actionInfo[1];
 
+    action.parent = self;
+
     if (self.endLinePos > -1)
         return index;
 
@@ -283,6 +285,7 @@ ActionManager.prototype.deleteAction = function(index) {
             preTime = self.actionList[index][0] + duration;
         }
         action.destroy();
+        action.parent = undefined;
     }
     delete self.actionList[index];
 
@@ -322,7 +325,7 @@ ActionManager.prototype.getDuration = function(recalc, singleLoop) {
             {
                 var amSamples = this.samples;
                 var samples = actionInfo[1].samples;
-                value = value * amSamples / samples;
+                value = value * amSamples / samples / actionInfo[1].speed;
                 if (duration < time + value)
                     duration = time + value;
             }
@@ -368,7 +371,7 @@ ActionManager.buildBundle = function(ob) {
         var loop = action.loop;
         var targetUUID = action.targetObject ? action.targetObject.uuid : undefined;
         content.dependences.push({ key : action.key, uuid : uuid });
-        actionList.push([time, uuid, loop, targetUUID, action.targetLocked]);
+        actionList.push([time, uuid, loop, targetUUID, action.targetLocked, action.speed]);
     }
     content.actionList = actionList;
 
@@ -399,6 +402,7 @@ ActionManager.restoreBundle = function(asset, game, inEditor, context) {
         var actionInfo = json.actionList[i] || [];
         var time = actionInfo[0], uuid = actionInfo[1], loop = actionInfo[2];
         var targetUUID = actionInfo[3], targetLocked = actionInfo[4];
+        var speed = actionInfo[5] || 1;
         var actionAsset = game.assets.findByUUID(uuid);
         if (actionAsset)
         {
@@ -418,6 +422,7 @@ ActionManager.restoreBundle = function(asset, game, inEditor, context) {
             }
 
             action.loop = loop;
+            action.speed = speed;
             if (!game.serializer.isRestoring)
                 action.targetObject = game.nodePool.find(targetUUID);
             else

@@ -191,7 +191,7 @@ qc.ActionProperties[qc.PROP_TEXTURE] = {
 };
 qc.ActionProperties[qc.PROP_ANIMATION] = {
         name: 'Animation',
-        class: 'qc.KeyProp',
+        class: 'qc.AnimationKeyProp',
         properties: [
             {
                 attrib: 'defaultAnimation',
