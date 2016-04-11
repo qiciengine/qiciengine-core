@@ -183,10 +183,21 @@ var AssetUtil = qc.AssetUtil = {
                     }
                 }
                 else {
-                    c._images[url].frameData = new Phaser.FrameData();
-                    c._images[url].frame = new Phaser.Frame(0, 0, 0, img.width, img.height, '', '');
-                    c._images[url].frameData.addFrame(new Phaser.Frame(0, 0, 0, img.width, img.height, null,
-                        game.math.uuid()));
+                    if (! meta.spriteSheet) {
+                        c._images[url].frameData = new Phaser.FrameData();
+                        c._images[url].frame = new Phaser.Frame(0, 0, 0, img.width, img.height, '', '');
+                        c._images[url].frameData.addFrame(new Phaser.Frame(0, 0, 0, img.width, img.height, null,
+                            game.math.uuid()));
+                    }
+                    else {
+                        // 指定了 spriteSheet 信息，需要通过该信息还原帧数据
+                        var frameWidth = img.width / (meta.spriteSheet.columns || 1);
+                        var frameHeight = img.height / (meta.spriteSheet.rows || 1);
+                        var margin = meta.spriteSheet.margin || 0;
+                        var spacing = meta.spriteSheet.spacing || 0;
+
+                        c._images[url].frameData = Phaser.AnimationParser.spriteSheet(game.phaser, url, frameWidth, frameHeight, -1, margin, spacing);
+                    }
                 }
                 c._resolveURL(url, c._images[url]);
             }
