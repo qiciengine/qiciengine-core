@@ -258,7 +258,7 @@ ActionState.restoreBundle = function(action, asset, inEditor) {
         }
         catch(e)
         {
-            game.log.error(e.stack);
+            game.log.error(e);
         }
     }
 
