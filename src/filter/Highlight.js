@@ -46,6 +46,7 @@ var Highlight = defineFilter('qc.Filter.Highlight', qc.Filter, function(game) {
     ];
     this.light = 0.5;
     this.lightColor = [1, 1, 1];
+    this.registerCustomInspector('lightColor', qc.Color);
 }, {
     light : qc.Filter.F1,
     lightColor : qc.Filter.F3V

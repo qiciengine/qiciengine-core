@@ -12,6 +12,7 @@ var Filter = qc.Filter = function(game) {
     Phaser.Filter.call(this, game);
     this._textureCount = 1;
     this.extraAttribute = [];
+    this.customInspectors = {};
 };
 Filter.prototype = Object.create(Phaser.Filter.prototype);
 Filter.prototype.constructor = Filter;
@@ -24,6 +25,13 @@ Object.defineProperties(Filter.prototype, {
         get : function() { return this._textureCount; }
     }
 });
+
+/**
+ *  注册属性的自定义显示类型
+ */
+Filter.prototype.registerCustomInspector = function(key, type) {
+    this.customInspectors[key] = type;
+};
 
 /**
  * 保存所有的自定义着色器
@@ -320,7 +328,7 @@ var defineFilter = qc.defineFilter = function(clazz, parent, init, extraUniforms
         // 调用初始化函数
         if (typeof init === 'function')
             init.call(this, game);
-    }
+    };
     curr[name].prototype = Object.create(parent.prototype);
     curr[name].prototype.constructor = curr[name];
 

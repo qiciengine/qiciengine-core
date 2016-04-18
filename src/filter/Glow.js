@@ -18,6 +18,8 @@ var Glow = defineFilter('qc.Filter.Glow', qc.Filter, function(game) {
     this.pixelHeight = 1 / game.phaser.renderer.height;
 
     this._updateFragmentSrc();
+
+    this.registerCustomInspector('glowColor', qc.Color);
 }, {
     quality: qc.Filter.F1,
     distance: qc.Filter.F1,
