@@ -8,9 +8,8 @@
  * 外发光
  */
 var Glow = defineFilter('qc.Filter.Glow', qc.Filter, function(game) {
-    this.quality = 0.4;
-    this.distance = 25;
-    this.outerStrength = 2;
+    this.distance = 40;
+    this.outerStrength = 1.5;
     this.innerStrength = 1;
     this.glowColor = [1, 0, 0];
 
@@ -19,9 +18,9 @@ var Glow = defineFilter('qc.Filter.Glow', qc.Filter, function(game) {
 
     this._updateFragmentSrc();
 
+    // 指定 glowColor 属性的自定义显示类型
     this.registerCustomInspector('glowColor', qc.Color);
 }, {
-    quality: qc.Filter.F1,
     distance: qc.Filter.F1,
     outerStrength: qc.Filter.F1,
     innerStrength: qc.Filter.F1,
@@ -41,19 +40,6 @@ Object.defineProperty(Glow.prototype, 'distance', {
     }
 });
 
-Object.defineProperty(Glow.prototype, 'quality', {
-    get: function() {
-        return this._quality;
-    },
-    set: function(value) {
-        this._quality = value;
-        this._updateFragmentSrc();
-
-        // 清空shader，之后会重新生成
-        this.shaders = [];
-    }
-});
-
 /**
  * 更新片段着色器
  */
@@ -62,7 +48,6 @@ Glow.prototype._updateFragmentSrc = function() {
         'precision mediump float;',
         'varying vec2 vTextureCoord;',
         'uniform sampler2D texture;',
-        'uniform float quality;',
         'uniform float distance;',
         'uniform float outerStrength;',
         'uniform float innerStrength;',
@@ -76,16 +61,25 @@ Glow.prototype._updateFragmentSrc = function() {
         '    vec4 curColor;',
         '    float totalAlpha = 0.;',
         '    float maxTotalAlpha = 0.;',
-        '    float cosAngle;',
-        '    float sinAngle;',
-        '    for (float angle = 0.; angle <= PI * 2.; angle += ' + (1 / this.distance).toFixed(7) + ') {',
-        '       cosAngle = cos(angle);',
-        '       sinAngle = sin(angle);',
-        '       for (float curDistance = 1.; curDistance <= ' + (this.distance * this.quality).toFixed(7) + '; curDistance++) {',
-        '           curColor = texture2D(texture, vec2(vTextureCoord.x + cosAngle * curDistance * px.x, vTextureCoord.y + sinAngle * curDistance * px.y));',
-        '           totalAlpha += (distance * quality - curDistance) * curColor.a;',
-        '           maxTotalAlpha += (distance * quality - curDistance);',
-        '       }',
+        '    float offset = 0.;',
+        '    for (float curDistance = 0.; curDistance <= ' + this.distance.toFixed(7) + '; curDistance++) {',
+        '       offset = curDistance - distance / 2.;',
+
+        '       curColor = texture2D(texture, vec2(vTextureCoord.x + offset * px.x, vTextureCoord.y));',
+        '       totalAlpha += (distance - curDistance) * curColor.a;',
+        '       maxTotalAlpha += (distance - curDistance);',
+
+        '       curColor = texture2D(texture, vec2(vTextureCoord.x, vTextureCoord.y + offset * px.y));',
+        '       totalAlpha += (distance - curDistance) * curColor.a;',
+        '       maxTotalAlpha += (distance - curDistance);',
+
+        '       curColor = texture2D(texture, vec2(vTextureCoord.x + cos(PI * 0.25) * offset * px.x, vTextureCoord.y + sin(PI * 0.25) * offset * px.y));',
+        '       totalAlpha += (distance - curDistance) * curColor.a;',
+        '       maxTotalAlpha += (distance - curDistance);',
+
+        '       curColor = texture2D(texture, vec2(vTextureCoord.x + cos(PI * 0.75) * offset * px.x, vTextureCoord.y + sin(PI * 0.75) * offset * px.y));',
+        '       totalAlpha += (distance - curDistance) * curColor.a;',
+        '       maxTotalAlpha += (distance - curDistance);',
         '    }',
         '    maxTotalAlpha = max(maxTotalAlpha, 0.0001);',
 
