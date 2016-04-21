@@ -3563,7 +3563,9 @@ declare module qc {
      * 
      * Note that your code will never directly create a Behaviour. Instead, you write script code, and attach the script to a GameObject(Node).
      */
-    export class Behaviour {
+    export abstract class Behaviour {
+        constructor(gameObject: Node);
+        
         /**
          * Read only. Local reference to game.
          */
@@ -3611,6 +3613,13 @@ declare module qc {
      * Define a Behaviour class.
      */
     export function defineBehaviour(clazz: string, inheritFrom: any, init: Function, serializable: Object): Behaviour;
+    
+    /**
+     * Register a Behaviour class.
+     * @params className: The full classname with namespace
+     * @params clazz: The class object
+     */
+    export function registerBehaviour(className: string, clazz: Function): void;
     
     /**
      * Adaptive resolution component.

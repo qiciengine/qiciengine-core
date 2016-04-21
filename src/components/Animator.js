@@ -19,14 +19,13 @@ var Animator = defineBehaviour('qc.Animator', qc.Behaviour, function() {
 
     self.runInEditor = true;
 },{
-    animators : qc.Serializer.ANIMATORS,
+    animators : qc.Serializer.ANIMATORS
 });
 
 // 菜单上的显示
 Animator.__menu = 'Action/Animator';
 
 Object.defineProperties(Animator.prototype, {
-
     // 设置 animators，解析 animators 资源，创建 action 或 actionManager 对象映射
     animators : {
         get : function() { return this._animators; },

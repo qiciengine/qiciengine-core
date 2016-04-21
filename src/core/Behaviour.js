@@ -17,6 +17,9 @@ var Behaviour = qc.Behaviour = function(gameObject) {
 
     // 缓存本节点关注的事件
     this._events = {};
+
+    // 记录下是否有调度函数
+    this.__hadUpdateOrRender = (this.preUpdate || this.update || this.postUpdate) ? true : false;
 };
 Behaviour.prototype.constructor = Behaviour;
 
@@ -43,9 +46,6 @@ var defineBehaviour = qc.defineBehaviour = function(clazz, parent, init, fields)
 
     fields = fields || {};
     curr[name] = function(gameObject) {
-        // 记录下是否有调度函数
-        this.__hadUpdateOrRender = (this.preUpdate || this.update || this.postUpdate) ? true : false;
-
         // 记录父亲和类名
         parent.call(this, gameObject);
         this.class = clazz;
@@ -71,6 +71,23 @@ var defineBehaviour = qc.defineBehaviour = function(clazz, parent, init, fields)
     qc._userScripts[clazz] = curr[name];
     return curr[name];
 };
+
+/**
+ * Register a Behaviour class. Use for Typescript only
+ */
+qc.registerBehaviour = function(className, clazz) {
+    // 设置需要序列化的字段
+    var f = clazz.prototype.getMeta;
+    clazz.prototype.getMeta = function() {
+        var meta = f.call(this);
+
+        // 合并下
+        return mixin(meta, this.serializableFields || {});
+    };
+
+    clazz.prototype.clazz = className;
+    qc._userScripts[className] = clazz;
+}
 
 Object.defineProperties(Behaviour.prototype, {
     /**
