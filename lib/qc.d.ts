@@ -147,7 +147,7 @@ declare module qc {
          * Returns the distance from the center of the Circle object to the given object
          * @params target
          */
-        distance(target: ({x: number, y: number})): number;
+        distance(target: ({x: number, y: number}), round?: boolean): number;
     }
     
     /**
@@ -173,11 +173,6 @@ declare module qc {
          */
         height: number;
         
-        /**
-         * Returns the distance from the center of the Ellipse object to the given object
-         * @params target
-         */
-        distance(target: ({x: number, y: number})): number;
         /**
          * Return true if the given x/y coordinates are within this Ellipse object.
          * @params x: the x coordinate of the point
@@ -449,11 +444,12 @@ declare module qc {
          * @params name: table's name
          */
         findSheet(name: string): ExcelSheet;
+
         /**
          * In Excel, the date type is the number of seconds that you have experienced in 1900, and you need to use this interface to convert before use.
          * @params number: date value in excel
          */
-        parseToDate(number: number): Date;
+        static parseToDate(number: number): Date;
     }
     
     /**
@@ -698,21 +694,21 @@ declare module qc {
          * @params place: The place to round to.
          * @params base: The base to round in... default is 10 for decimal.
          */
-        roundTo(value: number, place: number, base?: number): number;
+        roundTo(value: number, place?: number, base?: number): number;
         /**
          * Floor to some place comparative to a base, default is 10 for decimal place. The place is represented by the power applied to base to get that place.
          * @params value: The value to floor.
          * @params place: The place to floor to.
          * @params base: The base to floor in... default is 10 for decimal.
          */
-        floorTo(value: number, place: number, base?: number): number;
+        floorTo(value: number, place?: number, base?: number): number;
         /**
          * Ceil to some place comparative to a base, default is 10 for decimal place. The place is represented by the power applied to base to get that place.
          * @params value: The value to ceil.
          * @params place: The place to ceil to.
          * @params base: The base to ceil in... default is 10 for decimal.
          */
-        ceilTo(value: number, place: number, base?: number): number;
+        ceilTo(value: number, place?: number, base?: number): number;
         /**
          * Find the angle of a segment from (x1, y1) -> (x2, y2).
          * @params x1:
@@ -755,10 +751,10 @@ declare module qc {
          * Subtracts the given amount from the value, but never let the value go below the specified minimum.
          * @params value: The base value.
          * @params amount: The amount to subtract from the base value.
-         * @params max: The minimum the value is allowed to be.
+         * @params min: The minimum the value is allowed to be.
          * @return: The new value.
          */
-        minSub(value: number, amount: number, max: number): number;
+        minSub(value: number, amount: number, min: number): number;
         /**
          * Ensures that the value always stays between min and max, by wrapping the value around. If max is not larger than min the result is 0.
          * @params value: The value to wrap.
@@ -2301,8 +2297,9 @@ declare module qc {
          * Add a marker, play from the marker.
          * @params start: Start time in second
          * @params duration: Duration time in second
+         * @params volume: The volume the sound will play back at, between 0 (silent) and 1 (full volume).
          */
-        addMarker(start, duration): void;
+        addMarker(start, duration, volume): void;
         /**
          * Remove marker.
          */
@@ -3065,7 +3062,7 @@ declare module qc {
         /**
          * Current position of cursor in world coordinate
          */
-        cursonPosition: Point;
+        cursorPosition: Point;
         /**
          * Delta distance scrolled in axis x in current frame
          */
@@ -3380,7 +3377,7 @@ declare module qc {
          */
         total: number;
         /**
-         * Default 1.
+         * Maximum retry times when load assets failed, default value is 1.
          */
         maxRetryTimes: number;
         
@@ -3420,7 +3417,9 @@ declare module qc {
          * @params callback: Callback after resource load successful
          */
         loadTexture(url: string, callback?: Function): void;
-        loadTexture(key: string, IMG: HTMLImageElement, callback?: Function): void;
+        loadTexture(IMG: HTMLImageElement, callback?: Function): void;
+        loadTexture(key: string, url: string, callback?: Function): void;
+        loadTexture(key: string, IMG: HTMLImageElement, callback: Function): void;
     }
     
     /**
@@ -3464,7 +3463,7 @@ declare module qc {
         /**
          * The scene list of the game.
          */
-        list: Object[];
+        list: string[];
         /**
          * Is the scene in loading?
          */
@@ -3690,7 +3689,7 @@ declare module qc {
     /**
      * A component for table layout.
      */
-    export class TableLayout extends Behaviour {
+    export class TableLayout extends Bounds {
         /**
          * Not limit row and column,automally adjust row and column by size
          */
@@ -3960,7 +3959,7 @@ declare module qc {
     /**
      * Add this component to a GameObject to make it into a layout element or override values on an existing layout element.
      */
-    export class LayoutElement extends Behaviour {
+    export class LayoutElement extends Bounds {
         /**
          * Whether to allow to ignore layout
          */
@@ -4153,6 +4152,11 @@ declare module qc {
          * List of managed toggles
          */
         toggles: Toggle[];
+
+        /**
+         *  When current toggle changed, this event will be fired.
+         */
+        onValueChange: Signal;
     }
     
     /**
@@ -4307,15 +4311,29 @@ declare module qc {
         /**
          * From position(x and y, but not anchoredX or anchoredY).
          */
-        from: Color;
+        from: Point;
         /**
          * To Position(x and y, but not anchoredX or anchoredY).
          */
-        to: Color;
+        to: Point;
         /**
          * TweenPosition.ONLY_X(move x position only)、TweenPosition.ONLY_Y(move y position only)、TweenPosition.BOTH(move x and y)
          */
         moveAxis: number;
+    }
+
+    /**
+     * Tween the object's color.
+     */
+    export class TweenColor extends Tween {
+        /**
+         * From color
+         */
+        from: Color;
+        /**
+         * To color
+         */
+        to: Color;
     }
     
     /**

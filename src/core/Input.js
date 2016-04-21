@@ -224,8 +224,8 @@ Object.defineProperties(Input.prototype, {
      * @readonly
      */
     inputting: {
-        get: function () { return this._inputting > 0}
-    }    
+        get: function () { return this._inputting > 0; }
+    }
 });
 
 /**
