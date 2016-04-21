@@ -68,7 +68,7 @@ qc.Util = {
      * @param html 需要设置其Transform信息的html元素
      */
     updateTransform: function(node, html){
-        var game = node.game;        
+        var game = node.game;
         var scaleFactor = game.phaser.scale.scaleFactorInversed;
         var style = html.style;
         var rect = node.rect;
@@ -183,7 +183,7 @@ qc.Util = {
             if (objectType === '[object RegExp]')
                 return '[RegExp: ' + RegExp.prototype.toString.call(value) + ']';
             if (objectType === '[object Error]')
-                return '[Error: ' + value.message + ']';
+                return '[Error: ' + value.stack + ']';
             if (objectType === '[object Date]')
                 return '[Date: ' + Date.prototype.toString.call(value) + ']';
         }

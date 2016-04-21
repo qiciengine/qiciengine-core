@@ -108,7 +108,7 @@ Animator.prototype.play = function(nameOrIndex, targetObject, fromBegin) {
         return;
 
     targetObject = targetObject || this.gameObject;
-    fromBegin = fromBegin || true;
+    fromBegin = typeof(fromBegin) === 'boolean' ? fromBegin : true;
     animator.playAction(targetObject, fromBegin);
 };
 
