@@ -4548,7 +4548,7 @@ declare module qc {
     /**
      * Action Property
      */
-    export var PROP_POSITON: number;
+    export var PROP_POSITION: number;
     export var PROP_ROTATION: number;
     export var PROP_ALPHA: number;
     export var PROP_SCALE: number;
