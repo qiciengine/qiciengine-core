@@ -322,7 +322,7 @@ Action.prototype.update = function(deltaTime, isBegin, inEditor, forceUpdate) {
             var elapsedFrame = this.elapsedFrame - this.duration;
             while(elapsedFrame >= this.duration)
                 elapsedFrame = elapsedFrame - this.duration;
-            deltaTime = elapsedFrame / this.samples * 1000;
+            deltaTime = elapsedFrame / (this.samples * this.speed) * 1000;
             this.reset();
             this.startTime = time - deltaTime;
         }
@@ -337,7 +337,7 @@ Action.prototype.update = function(deltaTime, isBegin, inEditor, forceUpdate) {
         deltaTime = 0;
 
     var preElapsedTime = isBegin ? -1 : this.elapsedFrame;
-    this.elapsedFrame += deltaTime / 1000 * this.samples;
+    this.elapsedFrame += deltaTime / 1000 * this.samples * this.speed;
 
     // 更新属性
     for (var i = 0; i < this.actionList.length; i++)

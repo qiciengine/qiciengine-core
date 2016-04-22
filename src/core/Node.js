@@ -386,6 +386,7 @@ Node.prototype.addScript = function(script, dispatchAwake) {
     // 挂载时立刻调用其awake函数
     c.uuid = this.game.math.uuid();
     c._clazz = script;
+    c.class = script;
     this[c.key] = c;
     this.scripts.push(c);
     this.scriptMap[script] = c;
@@ -408,7 +409,7 @@ Node.prototype.addScript = function(script, dispatchAwake) {
 };
 
 /**
- * 移除一个逻辑脚本对象，使用时请调用Scriptable#destroy接口，不要直接使用本接口来移除
+ * 移除一个逻辑脚本对象，使用时请调用Behaviour#destroy接口，不要直接使用本接口来移除
  * @method
  * @internal
  * @param {qc.Behaviour} script - 移除的脚本对象
@@ -422,6 +423,10 @@ Node.prototype.removeScript = function(script) {
     if (this[script._key] && this[script._key].uuid === script.uuid)
         // 将旧的应用移除
         delete this[script._key];
+
+    if (this.__json && this.__json[script.uuid])
+        // 将旧的序列化数据删除
+        delete this.__json[script.uuid];
 };
 
 /**
@@ -705,7 +710,7 @@ Node.prototype.onDestroy = function() {
 
     // 通知phaser析构
     this.game.nodePool.remove(this.uuid);
-    
+
 };
 
 /**

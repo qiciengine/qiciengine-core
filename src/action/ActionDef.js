@@ -16,7 +16,7 @@ qc.CURVE_TYPE_TWEEN_RELATIVE = 3;
 qc.CURVE_TYPE_TWEEN_ABSOLUTE = 4;
 
 // 属性宏定义
-qc.PROP_POSITON = 1;
+qc.PROP_POSITION = 1;
 qc.PROP_ROTATION = 2;
 qc.PROP_ALPHA = 3;
 qc.PROP_SCALE = 4;
@@ -40,7 +40,7 @@ qc.PROP_DOM_INNERHTML = 21;
 qc.PROP_TILEMAP_POSITION = 22;
 
 qc.ActionProperties = {};
-qc.ActionProperties[qc.PROP_POSITON] = {
+qc.ActionProperties[qc.PROP_POSITION] = {
         name: 'Position',
         class: 'qc.CurveProp',
         curve: true,
@@ -191,7 +191,7 @@ qc.ActionProperties[qc.PROP_TEXTURE] = {
 };
 qc.ActionProperties[qc.PROP_ANIMATION] = {
         name: 'Animation',
-        class: 'qc.KeyProp',
+        class: 'qc.AnimationKeyProp',
         properties: [
             {
                 attrib: 'defaultAnimation',
@@ -330,7 +330,7 @@ qc.FinishTrigger = 1;
 qc.EventTrigger = 2;
 
 qc.propertyList = {
-    'qc.Node' : [qc.PROP_POSITON, qc.PROP_ANCHORED_POSITION, qc.PROP_ROTATION, qc.PROP_ALPHA, qc.PROP_SCALE, qc.PROP_COLOR_TINT, qc.PROP_VISIBLE, qc.PROP_SIZE, qc.PROP_PIVOT],
+    'qc.Node' : [qc.PROP_POSITION, qc.PROP_ANCHORED_POSITION, qc.PROP_ROTATION, qc.PROP_ALPHA, qc.PROP_SCALE, qc.PROP_COLOR_TINT, qc.PROP_VISIBLE, qc.PROP_SIZE, qc.PROP_PIVOT],
     'qc.UIImage' : [qc.PROP_SKEW, qc.PROP_TEXTURE],
     'qc.Sprite' : [qc.PROP_TEXTURE, qc.PROP_ANIMATION],
     'qc.UIText' : [qc.PROP_COLOR, qc.PROP_TEXT],

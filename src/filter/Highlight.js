@@ -46,6 +46,9 @@ var Highlight = defineFilter('qc.Filter.Highlight', qc.Filter, function(game) {
     ];
     this.light = 0.5;
     this.lightColor = [1, 1, 1];
+
+    // 指定 lightColor 属性的自定义显示类型
+    this.registerCustomInspector('lightColor', qc.Color);
 }, {
     light : qc.Filter.F1,
     lightColor : qc.Filter.F3V

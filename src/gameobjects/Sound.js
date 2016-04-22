@@ -279,8 +279,9 @@ Sound.prototype.stop = function() {
  * @method qc.Sound#addMarker
  * @param {number} start - The start point of this marker in the audio file, given in seconds. 2.5 = 2500ms, 0.5 = 500ms, etc.
  * @param {number} duration - The duration of the marker in seconds. 2.5 = 2500ms, 0.5 = 500ms, etc.
+ * @param {number} [volume=1] - The volume the sound will play back at, between 0 (silent) and 1 (full volume).
  */
-Sound.prototype.addMarker = function(start, duration) {
+Sound.prototype.addMarker = function(start, duration, volume) {
     // 先移除播放标记
     this.removeMarker();
 
@@ -289,9 +290,10 @@ Sound.prototype.addMarker = function(start, duration) {
     this.marker.name = "s";
     this.marker.start = start;
     this.marker.duration = duration;
+    this.marker.volume = volume;
 
     // 将标记添加都phaser里
-    this.soundPhaser.addMarker(this.marker.name, start, duration);
+    this.soundPhaser.addMarker(this.marker.name, start, duration, volume);
 };
 
 /**

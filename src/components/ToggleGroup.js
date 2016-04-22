@@ -89,7 +89,7 @@ Object.defineProperties(ToggleGroup.prototype, {
         get : function() {
             var v = this._allowSwitchOff;
             // 默认行为是 true
-            if (v == undefined)
+            if (v === undefined)
                 return true;
             else
                 return v;

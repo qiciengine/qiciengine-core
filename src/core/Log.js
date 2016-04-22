@@ -63,18 +63,23 @@ Log.prototype.error = function() {
     var content = qc.Util.formatString.apply(null, arguments);
     console.log('%c' + content, 'color:red');
 
-    // 有配置远程日志服务器地址，则发送日志到远程服务器
-    if (this.game.remoteLogUrl)
-        qc.AssetUtil.post(this.game.remoteLogUrl + '/remoteLog', Date.now() + ' ' + content, function(r){});
-
     // 打印错误堆栈
+    var errorStack;
     for (var i = 1; i < arguments.length; i++) {
         if (arguments[i] && arguments[i].stack) {
-            console.error(arguments[i].stack);
-            return;
+            errorStack = arguments[i].stack;
+            console.error(errorStack);
+            
+            break;
         }
     }
-    console.trace();
+
+    // 有配置远程日志服务器地址，则发送日志到远程服务器
+    if (this.game.remoteLogUrl)
+        qc.AssetUtil.post(this.game.remoteLogUrl + '/remoteLog', Date.now() + ' ' + errorStack ? errorStack : content, function(r){});
+
+    if (!errorStack)
+        console.trace();
 };
 
 /**

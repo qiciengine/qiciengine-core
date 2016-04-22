@@ -171,11 +171,11 @@ ActionManager.prototype.update = function(deltaTime, isBegin, inEditor, forceUpd
             var elapsedFrame = this.elapsedFrame - this.duration;
             while(elapsedFrame >= this.duration)
                 elapsedFrame = elapsedFrame - this.duration;
-            deltaTime = elapsedFrame / this.samples * 1000;
+            deltaTime = elapsedFrame / (this.samples * this.speed) * 1000;
             this.reset();
             var setStartTime = function(action, time, deltaTime) {
                 action.startTime = time;
-                var deltaFrame = deltaTime * action.samples / 1000;
+                var deltaFrame = deltaTime * action.samples * action.speed / 1000;
                 if (action.duration < deltaFrame)
                     // 若子 action 的时长少于 deltaFrame，则将 elapsedFrame 设置为 deltaFrame
                     action.elapsedFrame = deltaFrame;
@@ -205,13 +205,14 @@ ActionManager.prototype.update = function(deltaTime, isBegin, inEditor, forceUpd
         deltaTime = 0;
 
     var preElapsedTime = isBegin ? -1 : this.elapsedFrame;
-    this.elapsedFrame += deltaTime / 1000 * this.samples;
+    this.elapsedFrame += deltaTime / 1000 * this.samples * this.speed;
 
     // 判断是否触发动画帧事件
     if (this.eventList.length > 0 && !(inEditor && !this.playEventInEditor))
         this.triggerEvent(preElapsedTime);
 
     // 更新属性
+    deltaTime = deltaTime * this.speed;
     for (var i = 0; i < this.actionList.length; i++)
     {
         var actionInfo = this.actionList[i];
@@ -238,6 +239,8 @@ ActionManager.prototype.addAction = function(actionInfo) {
     var index = self.actionList.push(actionInfo);
 
     var time = actionInfo[0], action = actionInfo[1];
+
+    action.parent = self;
 
     if (self.endLinePos > -1)
         return index;
@@ -282,6 +285,7 @@ ActionManager.prototype.deleteAction = function(index) {
             preTime = self.actionList[index][0] + duration;
         }
         action.destroy();
+        action.parent = undefined;
     }
     delete self.actionList[index];
 
@@ -321,7 +325,7 @@ ActionManager.prototype.getDuration = function(recalc, singleLoop) {
             {
                 var amSamples = this.samples;
                 var samples = actionInfo[1].samples;
-                value = value * amSamples / samples;
+                value = value * amSamples / samples / actionInfo[1].speed;
                 if (duration < time + value)
                     duration = time + value;
             }
@@ -367,7 +371,7 @@ ActionManager.buildBundle = function(ob) {
         var loop = action.loop;
         var targetUUID = action.targetObject ? action.targetObject.uuid : undefined;
         content.dependences.push({ key : action.key, uuid : uuid });
-        actionList.push([time, uuid, loop, targetUUID, action.targetLocked]);
+        actionList.push([time, uuid, loop, targetUUID, action.targetLocked, action.speed]);
     }
     content.actionList = actionList;
 
@@ -398,6 +402,7 @@ ActionManager.restoreBundle = function(asset, game, inEditor, context) {
         var actionInfo = json.actionList[i] || [];
         var time = actionInfo[0], uuid = actionInfo[1], loop = actionInfo[2];
         var targetUUID = actionInfo[3], targetLocked = actionInfo[4];
+        var speed = actionInfo[5] || 1;
         var actionAsset = game.assets.findByUUID(uuid);
         if (actionAsset)
         {
@@ -417,6 +422,7 @@ ActionManager.restoreBundle = function(asset, game, inEditor, context) {
             }
 
             action.loop = loop;
+            action.speed = speed;
             if (!game.serializer.isRestoring)
                 action.targetObject = game.nodePool.find(targetUUID);
             else

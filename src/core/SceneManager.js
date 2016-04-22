@@ -51,7 +51,7 @@ Object.defineProperties(SceneManager.prototype, {
     },
 
     /**
-     * @property {object} list - 用户的场景URL列表
+     * @property {string[]} list - 用户的场景URL列表
      */
     list : {
         get : function()  { return this._list; },
