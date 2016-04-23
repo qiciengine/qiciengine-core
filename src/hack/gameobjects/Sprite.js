@@ -41,7 +41,9 @@ Phaser.Sprite.prototype.preUpdate = function() {
 
     // 物理调度
     if (this.fresh) {
-        this.world.setTo(this.parent.position.x + this.position.x, this.parent.position.y + this.position.y);
+        var worldX = (this.parent.position.x + this.position.x) * this.worldTransform.a;
+        var worldY = (this.parent.position.y + this.position.y) * this.worldTransform.d;
+        this.world.setTo(worldX, worldY);
         this.worldTransform.tx = this.world.x;
         this.worldTransform.ty = this.world.y;
 
