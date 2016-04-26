@@ -967,6 +967,10 @@ Node.prototype.addChildAt = function(child, index) {
  * @param index 所在父亲节点的孩子位置索引，为空代表插入到最后
  */
 Node.prototype.switchParent = function(parent, index) {
+    // 目标父节点不允许是自身或者自身的子节点
+    if (parent === this || parent.isDescendantOf(this))
+        return;
+
     var worldTransBak = this.worldTransform;
     var a = worldTransBak.a;
     var b = worldTransBak.b;
@@ -982,7 +986,7 @@ Node.prototype.switchParent = function(parent, index) {
     delete this._isSwitchParent;
 
     // 设置会原来index位置
-    if (index != null) {
+    if (index !== null) {
         this.parent.setChildIndex(this, index);
     }
 
