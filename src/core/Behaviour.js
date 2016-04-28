@@ -73,7 +73,7 @@ var defineBehaviour = qc.defineBehaviour = function(clazz, parent, init, fields)
 };
 
 /**
- * Register a Behaviour class. Use for Typescript only
+ * Register a Behaviour class. Use for TypeScript only
  */
 qc.registerBehaviour = function(className, clazz) {
     // 设置需要序列化的字段
