@@ -125,7 +125,7 @@ var Game = qc.Game = function(width, height, parent, state, transparent, editor,
         // 设置居中显示，canvas会居于parent的中间
         self.phaser.scale.pageAlignHorizontally = true;
         self.phaser.scale.pageAlignVertically = true;
-        self.phaser.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;        
+        self.phaser.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 
         // 横竖屏检测
         self.phaser.scale.onSizeChange.add(function() {
@@ -149,7 +149,7 @@ var Game = qc.Game = function(width, height, parent, state, transparent, editor,
     };
 
     config.state = state;
-    
+
     // Use WebGL renderer default
     config.renderer = config.renderer == null ? Phaser.AUTO : config.renderer;
 
@@ -181,12 +181,19 @@ var Game = qc.Game = function(width, height, parent, state, transparent, editor,
 
     if (!config.resolution) {
         var ratio = window.devicePixelRatio;
-        if (self.device.desktop || self.fixedGameSize)
-            // desktop环境或指定了游戏大小情况下，直接采用当前的 devicePixelRatio
-            config.resolution = ratio;
+        if (typeof(config.resolutionRatio) === 'number')
+        {
+            config.resolution = 1 + Math.max(0, (ratio - 1) * config.resolutionRatio);
+        }
         else
-            // mobile 环境，默认使用 1 + (ratio - 1) / 4 的方案优先保证流畅（最少有 1）
-            config.resolution = 1 + Math.max(0, (ratio - 1) / 4);
+        {
+            if (self.device.desktop)
+                // desktop环境下，直接采用当前的 devicePixelRatio
+                config.resolution = ratio;
+            else
+                // mobile 环境，默认使用 1 + (ratio - 1) / 4 的方案优先保证流畅（最少有 1）
+                config.resolution = 1 + Math.max(0, (ratio - 1) / 4);
+        }
     }
 
     // 默认背景色
@@ -597,7 +604,7 @@ Game.prototype.fullScreen = function() {
         }
         lastWidth = width;
         lastHeight = height;
-        
+
         if (game.device.iOS) {
             // 绕开iOS下宽高比未变化界面更新问题
             game.setGameSize(width-5, height+5);
@@ -608,7 +615,7 @@ Game.prototype.fullScreen = function() {
         else {
             game.setGameSize(width, height);
         }
-        
+
         // 设置富容器大小
         game.container.style.width = width + 'px';
         game.container.style.height = height + 'px';
@@ -642,11 +649,11 @@ Game.prototype.fullScreen = function() {
 
 /**
  * 设置游戏大小
- */ 
-Game.prototype.setGameSize = function(width, height) { 
+ */
+Game.prototype.setGameSize = function(width, height) {
     if (!this.fixedGameSize) {
-        this.phaser.scale.setGameSize(width, height);          
-    }    
+        this.phaser.scale.setGameSize(width, height);
+    }
     this.updateScale();
 };
 
@@ -657,7 +664,7 @@ Game.prototype.updateGameLayout = function(force) {
     // 调整游戏界面大小
     if (this._adjustToFullScreen) {
         this._adjustToFullScreen(force);
-    }   
+    }
     // 更新frontDomRoot和backDomRoot的参数
     this.world.updateDomRoot();
 }
