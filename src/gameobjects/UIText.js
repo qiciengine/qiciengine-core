@@ -1414,7 +1414,7 @@ UIText._phaserDetermineFontProperties = function(fontStyle) {
     {
         properties = {};
         if (!PIXI.Text.fontPropertiesCanvas) {
-            PIXI.Text.fontPropertiesCanvas = document.createElement('canvas');
+            PIXI.Text.fontPropertiesCanvas = PIXI.sharedCanvas;
             PIXI.Text.fontPropertiesContext = PIXI.Text.fontPropertiesCanvas.getContext('2d');
         }
         var canvas = PIXI.Text.fontPropertiesCanvas;
