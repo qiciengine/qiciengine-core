@@ -19,6 +19,25 @@ PIXI.Text.prototype.getSelfWidth = function() {
 PIXI.Text.prototype.getSelfHeight = function() {
     return this.texture && this.texture.frame && this.texture.frame.height * (this._canvasDownScale ? this._canvasDownScale.y : 1);
 };
+
+// 将 canvas 上的文字离线到 render texture 上
+PIXI.Text.prototype._uploadToRenderTexture = function() {
+    var frameTexture = this._frameTexture;
+    var baseTexture = frameTexture.baseTexture;
+
+    // 置源，开始离线
+    var renderer = this.game.renderer;
+    baseTexture.source = this.canvas;
+    renderer.updateTexture(baseTexture);
+
+    // 更新文字
+    this.texture = frameTexture;
+    baseTexture.resolution = this.resolution;
+    baseTexture.scaleMode = PIXI.scaleModes.NEAREST;
+    baseTexture.width = frameTexture.crop.width = frameTexture.frame.width = this.canvas.width;
+    baseTexture.height = frameTexture.crop.height = frameTexture.frame.height = this.canvas.height;
+};
+
 /**
  * 将宽度除去分辨率
  * @hackpp
@@ -94,49 +113,11 @@ var oldRenderWebGL = PIXI.Sprite.prototype._renderWebGL;
 
 var createFunc = function(baseRenderFunc){
     return function(renderSession) {
-        var gameObject = this._nqc;
-        if(this.dirty)
-        {
-            this.updateText();
-            this.getWorldTransform();
-            this.dirty = false;
-        }
-        else {
-            var worldScale = gameObject.getWorldScale();
-            var preWorldScale = gameObject._preWorldScale;
-            var fixedTime = gameObject.game.time.fixedTime;
-
-            if (!preWorldScale) {
-                // 初始化上一帧世界缩放
-                gameObject._preWorldScale = new qc.Point(worldScale.x, worldScale.y);
-                gameObject._worldScaleChangeTime = fixedTime;
-            }
-            else if (preWorldScale.x !== worldScale.x || preWorldScale.y !== worldScale.y) {
-                // 世界缩放发生变更，记录下来
-                preWorldScale.x = worldScale.x;
-                preWorldScale.y = worldScale.y;
-                gameObject._worldScaleChangeTime = fixedTime;
-                if (gameObject.scaleDirtyInterval === 0) {
-                    this.dirty = true;
-                }
-            }
-            else {
-                // 世界缩放没任何变化，尝试更新 text canvas
-                var textWorldScale = this._worldScale;
-                var dirtyInterval = gameObject.scaleDirtyInterval || textScaleDirtyInterval;
-                if (fixedTime - gameObject._worldScaleChangeTime > dirtyInterval &&
-                    (!textWorldScale || worldScale.x !== textWorldScale.x || worldScale.y !== textWorldScale.y)) {
-                    // 不一致，且时间足够长，需要更新
-                    this.dirty = true;
-                }
-            }
-        }
-
         var canvasDownScale = this._canvasDownScale;
         var sessionRoundPixels;
 
         // 文字绘制开启RoundPixel功能
-        var enableRoundPixels = (gameObject.roundPixels !== false);
+        var enableRoundPixels = (this._nqc.roundPixels !== false);
 
         if (enableRoundPixels) {
             sessionRoundPixels = renderSession.roundPixels;
