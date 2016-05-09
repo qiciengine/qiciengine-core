@@ -326,8 +326,6 @@ Phaser.Text.prototype._getWorldWidth = function(str) {
  * @private
  */
 Phaser.Text.prototype._isLetter = function(letter){
-    // TODO 暂时不做单词判断 以后在富文本中处理
-    return false;
     if (( letter < "a" || letter > "z" ) && ( letter < "A" || letter > "Z" )){
         return false;
     }
