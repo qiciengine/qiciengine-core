@@ -641,8 +641,8 @@ Game.prototype.fullScreen = function() {
         }
     };
 
-    window.addEventListener('orientationchange', game.updateGameLayout.bind(game), false);
-    window.addEventListener('resize', game.updateGameLayout.bind(game), false);
+    window.addEventListener('orientationchange', game.updateGameLayout.bind(game, false), false);
+    window.addEventListener('resize', game.updateGameLayout.bind(game, false), false);
     window.scrollTo(0, 1);
     game._adjustToFullScreen();
 };
