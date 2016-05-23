@@ -26,19 +26,37 @@ var TweenTransform = defineBehaviour('qc.TweenTransform', qc.Tween, function() {
 // 菜单上的显示
 TweenTransform.__menu = 'Tween/TweenTransform';
 
-// 初始化：计算起点和目标点位置对应的本地坐标
-TweenTransform.prototype.awake = function() {
-    var self = this;
+Object.defineProperties(TweenTransform.prototype, {
+    /**
+     * @property {qc.Node} from - 起始位置
+     */
+    from : {
+        get : function() {
+            return this._from;
+        },
+        set : function(v) {
+            this._from = v;
 
-    if (!self.from || !self.to)
-        return;
+           var worldFrom = this._from.getWorldPosition();
+           this.localFrom = this.gameObject.parent.toLocal(worldFrom);
+        }
+    },
 
-    var worldFrom = self.from.getWorldPosition();
-    var worldTo   = self.to.getWorldPosition();
+    /**
+     * @property {qc.Node} to - 终点位置
+     */
+    to : {
+        get : function() {
+            return this._to;
+        },
+        set : function(v) {
+            this._to = v;
 
-    self.localFrom = this.gameObject.parent.toLocal(worldFrom);
-    self.localTo   = this.gameObject.parent.toLocal(worldTo);
-};
+           var worldTo = this._to.getWorldPosition();
+           this.localTo = this.gameObject.parent.toLocal(worldTo);
+        }
+    }
+});
 
 // 帧调度: 驱动位置
 TweenTransform.prototype.onUpdate = function(factor, isFinished) {
