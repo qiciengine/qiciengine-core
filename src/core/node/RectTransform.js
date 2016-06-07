@@ -986,7 +986,7 @@ Node.prototype.switchParent = function(parent, index) {
     delete this._isSwitchParent;
 
     // 设置会原来index位置
-    if (index !== null) {
+    if (index) {
         this.parent.setChildIndex(this, index);
     }
 
