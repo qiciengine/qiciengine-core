@@ -37,8 +37,10 @@ Object.defineProperties(TweenTransform.prototype, {
         set : function(v) {
             this._from = v;
 
-           var worldFrom = this._from.getWorldPosition();
-           this.localFrom = this.gameObject.parent.toLocal(worldFrom);
+            if (v) {
+                var worldFrom = this._from.getWorldPosition();
+                this.localFrom = this.gameObject.parent.toLocal(worldFrom);
+            }
         }
     },
 
@@ -51,15 +53,20 @@ Object.defineProperties(TweenTransform.prototype, {
         },
         set : function(v) {
             this._to = v;
-
-           var worldTo = this._to.getWorldPosition();
-           this.localTo = this.gameObject.parent.toLocal(worldTo);
+            
+            if (v) {
+                var worldTo = this._to.getWorldPosition();
+                this.localTo = this.gameObject.parent.toLocal(worldTo);
+            }
         }
     }
 });
 
 // 帧调度: 驱动位置
 TweenTransform.prototype.onUpdate = function(factor, isFinished) {
+    if (!this._from || !this._to)
+        return;
+
     var self = this;
 
     self.gameObject.x = self.localFrom.x + factor * (self.localTo.x - self.localFrom.x);
