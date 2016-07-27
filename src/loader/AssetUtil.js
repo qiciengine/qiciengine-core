@@ -21,6 +21,7 @@ var AssetUtil = qc.AssetUtil = {
     ASSET_WEBFONT : 8,
     ASSET_ACTION : 9,
     ASSET_ACTIONMANAGER : 10,
+    ASSET_TS     : 99,
     ASSET_JS     : 100,
     ASSET_UNKNOWN : 101,
 

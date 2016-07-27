@@ -259,7 +259,7 @@ DirtyRectangle.prototype.updateDirtyRegion = function(context, resolution, stage
         self._destroyRegion = [];
     }
 
-    if (self._recalcAll || self.forceDirty) {
+    if (self._recalcAll || self.forceDirty || dirtyRegion.length > 500) {
         self._recalcAll = false;
         self._currDirtyRegion = dirtyRegion = [
             { x: 0, y: 0, width: self.game.width, height: self.game.height }

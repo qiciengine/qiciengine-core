@@ -56,6 +56,7 @@ var UIText = qc.UIText = function(game, parent, uuid) {
     this._fontFamily = UIText.SYSTEMFONT;
 
     this.textPhaser.updateText = UIText._phaserUpdateText;
+
     this.textPhaser.determineFontProperties = UIText._phaserDetermineFontProperties;
 
     // 设置阴影参数
@@ -756,6 +757,7 @@ Object.defineProperties(UIText.prototype, {
                 this._glowText.rotation = this.textPhaser.rotation;
 
                 this._glowText.updateText = UIText._phaserUpdateText;
+
                 this._glowText.determineFontProperties = UIText._phaserDetermineFontProperties;
 
                 this._glowText.font = this.textPhaser.font;
@@ -812,6 +814,7 @@ UIText.prototype._changeText = function(font) {
     else {
         text = new Phaser.Text(this.game.phaser);
         text.updateText = UIText._phaserUpdateText;
+
         text.determineFontProperties = UIText._phaserDetermineFontProperties;
         if (this._glowText) {
             this._glowText.visible = true;
@@ -880,6 +883,50 @@ UIText.prototype.setHeight = function(h) {
     if (this.textPhaser) {
         this.textPhaser.dirty = true;
         this._adjustTextPos();
+    }
+};
+
+/**
+ * 关注文字的 postUpdate，在此阶段进行文字信息的更新
+ */
+UIText.prototype.postUpdate = function() {
+    var gameObject = this;
+    var phaser = this.textPhaser;
+
+    if (phaser.dirty)
+    {
+        phaser.updateText();
+    }
+    else {
+        var worldScale = gameObject.getWorldScale();
+        var preWorldScale = gameObject._preWorldScale;
+        var fixedTime = gameObject.game.time.fixedTime;
+
+        if (!preWorldScale) {
+            // 初始化上一帧世界缩放
+            gameObject._preWorldScale = new qc.Point(worldScale.x, worldScale.y);
+            gameObject._worldScaleChangeTime = fixedTime;
+        }
+        else if (preWorldScale.x !== worldScale.x || preWorldScale.y !== worldScale.y) {
+            // 世界缩放发生变更，记录下来
+            preWorldScale.x = worldScale.x;
+            preWorldScale.y = worldScale.y;
+            gameObject._worldScaleChangeTime = fixedTime;
+            if (gameObject.scaleDirtyInterval === 0) {
+                phaser.updateText();
+            }
+        }
+        else {
+            // 世界缩放没任何变化，尝试更新 text canvas
+            var textWorldScale = phaser._worldScale;
+            var dirtyInterval = gameObject.scaleDirtyInterval || textScaleDirtyInterval;
+            if (fixedTime - gameObject._worldScaleChangeTime > dirtyInterval &&
+                (!textWorldScale || worldScale.x !== textWorldScale.x || worldScale.y !== textWorldScale.y)) {
+                // 不一致，且时间足够长，需要更新
+                phaser.updateText();
+
+            }
+        }
     }
 };
 
@@ -1141,6 +1188,14 @@ UIText.prototype._refreshWebFont = function(fontName) {
  * @hackpp
  */
 UIText._phaserUpdateText = function() {
+    var textInWebGL = !this._canvasMode;
+
+    // webgl 模式下的文字，更新文字时：
+    //     先将 drawSprite 赋给 text 对象，作为其 texture
+    //     将文字绘制在该 canvas 上
+    //     离线该 canvas 文字到 render texture 上
+    if (textInWebGL) this.texture = PIXI.Text.drawSprite;
+
     // 世界缩放比例
     var _qc = this._nqc;
     var canvas = this.canvas;
@@ -1390,6 +1445,9 @@ UIText._phaserUpdateText = function() {
 
     this.updateTexture();
 
+    // 并非跑在 webgl 模式下，如果是 webgl 模式，更新 render texture
+    if (textInWebGL) this._uploadToRenderTexture();
+
     /**
      * @hackpp 修复Canvas模式下染色不更新的问题
      * https://github.com/photonstorm/phaser/commit/9362a2b1f480ef570c2a5a05e2fceec03e169262
@@ -1400,8 +1458,11 @@ UIText._phaserUpdateText = function() {
     // TODO 先全部通知
     //_qc._onPhaseTextSizeChange.dispatch(width, height);
     _qc._adjustTextPos();
-};
 
+    // 更新世界坐标，并标记缓存为干净
+    this.getWorldTransform();
+    this.dirty = false;
+};
 
 /**
  * hack text 的 determineFontProperties 方法为了获取行高
@@ -1414,7 +1475,7 @@ UIText._phaserDetermineFontProperties = function(fontStyle) {
     {
         properties = {};
         if (!PIXI.Text.fontPropertiesCanvas) {
-            PIXI.Text.fontPropertiesCanvas = document.createElement('canvas');
+            PIXI.Text.fontPropertiesCanvas = PIXI.sharedCanvas;
             PIXI.Text.fontPropertiesContext = PIXI.Text.fontPropertiesCanvas.getContext('2d');
         }
         var canvas = PIXI.Text.fontPropertiesCanvas;
