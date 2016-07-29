@@ -76,6 +76,17 @@ var defineBehaviour = qc.defineBehaviour = function(clazz, parent, init, fields)
  * Register a Behaviour class. Use for TypeScript only
  */
 qc.registerBehaviour = function(className, clazz) {
+    // 先将clazz分解下，并创建包
+    var arr = className.split('.');
+    var curr = window;
+    for (var i = 0; i < arr.length - 1; i++) {
+        if (!curr[arr[i]]) curr[arr[i]] = {};
+        curr = curr[arr[i]];
+    }
+
+    var name = arr[arr.length - 1];
+    curr[name] = clazz;
+    
     // 设置需要序列化的字段
     var f = clazz.prototype.getMeta;
     clazz.prototype.getMeta = function() {
