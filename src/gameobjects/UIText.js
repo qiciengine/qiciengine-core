@@ -710,6 +710,7 @@ Object.defineProperties(UIText.prototype, {
             if (this._glowText) {
                 this._glowText.fill = value;
                 this._glowText.stroke = value;
+                this._glowText.shadowColor = value;
                 this._glowText.dirty = true;
             }
         }
