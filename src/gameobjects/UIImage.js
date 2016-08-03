@@ -1347,6 +1347,9 @@ var imageUpdateTransform = function()
         wt.tx = tx * pta + ty * ptc + pt.tx;
         wt.ty = tx * ptb + ty * ptd + pt.ty;
 
+        this._isNotNeedCalcTransform = true;
+        this._isSubNeedCalcTransform = true;
+
         //  Custom callback?
         if (self.transformCallback)
         {
