@@ -112,11 +112,11 @@ var dragonBones;
             }
 
             QcBonesFactory.prototype._generateArmature = function (armatureName) {
-                var display = new qc.Node(new Phaser.Group(dragonBones.game, null));
+                var display = new qc.UIImage(dragonBones.game._qc);
                 var armature = new dragonBones.Armature(display);
                 display.name = armatureName;
                 display._bone = true;
-                return armature
+                return armature;
             };
             QcBonesFactory.prototype._generateSlot = function () {
                 var slot = new dragonBones.Slot(new display.QcDisplayBridge());
