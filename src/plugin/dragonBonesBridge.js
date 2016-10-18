@@ -116,6 +116,7 @@ var dragonBones;
                 var armature = new dragonBones.Armature(display);
                 display.name = armatureName;
                 display._bone = true;
+                display._armature = true;
                 return armature;
             };
             QcBonesFactory.prototype._generateSlot = function () {
