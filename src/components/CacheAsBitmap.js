@@ -129,6 +129,7 @@ CacheAsBitmap.prototype.onEnable = function() {
 CacheAsBitmap.prototype.onDisable = function() {
     var self = this;
     self.gameObject.phaser.setDisplayProxy(null, false);
+    self.gameObject._notifyCacheChanged(false);
     if (self._nodeRenderCanvas) {
         self.gameObject.phaser._renderCanvas = self._nodeRenderCanvas;
         self._nodeRenderCanvas = null;
@@ -144,6 +145,7 @@ CacheAsBitmap.prototype.onDisable = function() {
  */
 CacheAsBitmap.prototype.onDestroy = function() {
     var self = this;
+    self.gameObject._notifyCacheChanged(false);
     if (self._nodeRenderCanvas) {
         self.gameObject.phaser._renderCanvas = self._nodeRenderCanvas;
         self._nodeRenderCanvas = null;
@@ -320,6 +322,7 @@ CacheAsBitmap.prototype.renderCanvas = function(renderSession) {
     if (go.phaser.visible === false || go.renderable === false)
         return;
     if (self._updatingCache && self._nodeRenderCanvas) {
+        self.gameObject._notifyCacheChanged(true);
         self._nodeRenderCanvas.call(self.gameObject.phaser, renderSession);
         return;
     }
@@ -337,6 +340,7 @@ CacheAsBitmap.prototype.renderWebGL = function(renderSession){
     if (go.phaser.visible === false || go.renderable === false)
         return;
     if (self._updatingCache && self._nodeRenderWebGL) {
+        self.gameObject._notifyCacheChanged(true);
         self._nodeRenderWebGL.call(self.gameObject.phaser, renderSession);
         return;
     }

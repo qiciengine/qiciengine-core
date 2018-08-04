@@ -106,7 +106,8 @@ var Game = qc.Game = function(width, height, parent, state, transparent, editor,
         // 设置canvas的边框为0，否则input设置focus时不同浏览器有不同的焦点效果
         self.canvas.style.outline = 0;
         // 设置透明，否则在input.touch.capture为false的情况下点击界面会高亮
-        self.container.style.setProperty("-webkit-tap-highlight-color", "rgba(0, 0, 0, 0)", null);
+        if (self.container && self.container.style && self.container.style.setProperty)
+            self.container.style.setProperty("-webkit-tap-highlight-color", "rgba(0, 0, 0, 0)", null);
 
         // 初始化 DragonBones 组件
         self.plugins.add(qc.dragonBonesDriver);
@@ -162,6 +163,7 @@ var Game = qc.Game = function(width, height, parent, state, transparent, editor,
         case Phaser.AUTO:
             var webGLSupport = (function () {
                 try {
+                    if (window.__wx) return true;
                     var canvas = document.createElement('canvas');
                     canvas.screencanvas = false;
                     return !!window.WebGLRenderingContext && (canvas.getContext('webgl' )|| canvas.getContext('experimental-webgl'));
@@ -588,12 +590,12 @@ Game.prototype.fullScreen = function() {
         }
 
         // 获取当前宽度
-        var width = document.documentElement.clientWidth;
+        var width = document.documentElement.clientWidth || window.innerWidth;
         if (window.innerWidth && window.innerWidth < width) {
             width = window.innerWidth;
         }
         // 获取当前宽度
-        var height = document.documentElement.clientHeight;
+        var height = document.documentElement.clientHeight || window.innerHeight;
         if (window.innerHeight && window.innerHeight < height) {
             height = window.innerHeight;
         }
@@ -617,8 +619,10 @@ Game.prototype.fullScreen = function() {
         }
 
         // 设置富容器大小
-        game.container.style.width = width + 'px';
-        game.container.style.height = height + 'px';
+        if (game.container && game.container.style) {
+            game.container.style.width = width + 'px';
+            game.container.style.height = height + 'px';
+        }
         game.updateScale();
 
         // iOS下的UC浏览器输入框隐藏后height有问题，所以...
@@ -690,107 +694,112 @@ Game.prototype.update = function(time) {
     phaser.time.update(time);
     var fixedFrameDelta = 1.0 / phaser.time.desiredFps;
 
-    if (phaser._kickstart)
-    {
-        this.updateLogic(fixedFrameDelta);
-
-        //  Sync the scene graph after _every_ logic update to account for moved game objects
-        phaser._calcTransformCount = 0;
-        phaser.stage.updateTransform();
-
-        // call the game render update exactly once every frame
-        this.updateRender(phaser.time.slowMotion * phaser.time.desiredFps);
-
-        phaser._kickstart = false;
-        return;
-    }
-
-    // if the logic time is spiraling upwards, skip a frame entirely
-    if (phaser._spiraling > 1 && !phaser.forceSingleUpdate)
-    {
-        // cause an event to warn the program that this CPU can't keep up with the current desiredFps rate
-        if (phaser.time.time > phaser._nextFpsNotification)
+    try {
+        if (phaser._kickstart)
         {
-            // only permit one fps notification per 10 seconds
-            phaser._nextFpsNotification = phaser.time.time + 1000 * 10;
+            this.updateLogic(fixedFrameDelta);
 
-            // dispatch the notification signal
-            phaser.fpsProblemNotifier.dispatch();
+            //  Sync the scene graph after _every_ logic update to account for moved game objects
+            phaser._calcTransformCount = 0;
+            phaser.stage.updateTransform();
+
+            // call the game render update exactly once every frame
+            this.updateRender(phaser.time.slowMotion * phaser.time.desiredFps);
+
+            phaser._kickstart = false;
+            return;
         }
 
-        // reset the _deltaTime accumulator which will cause all pending dropped frames to be permanently skipped
-        phaser._deltaTime = 0;
-        phaser._spiraling = 0;
-
-        // call the game render update exactly once every frame
-        phaser.updateRender(phaser.time.slowMotion * phaser.time.desiredFps);
-    }
-    else
-    {
-        // step size taking into account the slow motion speed
-        var slowStep = phaser.time.slowMotion * 1000.0 / phaser.time.desiredFps;
-
-        // accumulate time until the slowStep threshold is met or exceeded... up to a limit of 3 catch-up frames at slowStep intervals
-        phaser._deltaTime += Math.max(Math.min(slowStep * 3, phaser.time.elapsed), 0);
-
-        // call the game update logic multiple times if necessary to "catch up" with dropped frames
-        // unless forceSingleUpdate is true
-        var count = 0;
-
-        phaser.updatesThisFrame = Math.floor(phaser._deltaTime / slowStep);
-
-        if (phaser.forceSingleUpdate)
+        // if the logic time is spiraling upwards, skip a frame entirely
+        if (phaser._spiraling > 1 && !phaser.forceSingleUpdate)
         {
-            phaser.updatesThisFrame = Math.min(1, phaser.updatesThisFrame);
+            // cause an event to warn the program that this CPU can't keep up with the current desiredFps rate
+            if (phaser.time.time > phaser._nextFpsNotification)
+            {
+                // only permit one fps notification per 10 seconds
+                phaser._nextFpsNotification = phaser.time.time + 1000 * 10;
+
+                // dispatch the notification signal
+                phaser.fpsProblemNotifier.dispatch();
+            }
+
+            // reset the _deltaTime accumulator which will cause all pending dropped frames to be permanently skipped
+            phaser._deltaTime = 0;
+            phaser._spiraling = 0;
+
+            // call the game render update exactly once every frame
+            phaser.updateRender(phaser.time.slowMotion * phaser.time.desiredFps);
         }
-
-        var needToUpdate = false;
-        while (phaser._deltaTime >= slowStep)
+        else
         {
-            phaser._deltaTime -= slowStep;
-            phaser.currentUpdateID = count;
+            // step size taking into account the slow motion speed
+            var slowStep = phaser.time.slowMotion * 1000.0 / phaser.time.desiredFps;
 
-            if (!needToUpdate) {
-                // 如果处于暂停状态也不进行更新
-                if (!this._paused && !this.pendingStep)
+            // accumulate time until the slowStep threshold is met or exceeded... up to a limit of 3 catch-up frames at slowStep intervals
+            phaser._deltaTime += Math.max(Math.min(slowStep * 3, phaser.time.elapsed), 0);
+
+            // call the game update logic multiple times if necessary to "catch up" with dropped frames
+            // unless forceSingleUpdate is true
+            var count = 0;
+
+            phaser.updatesThisFrame = Math.floor(phaser._deltaTime / slowStep);
+
+            if (phaser.forceSingleUpdate)
+            {
+                phaser.updatesThisFrame = Math.min(1, phaser.updatesThisFrame);
+            }
+
+            var needToUpdate = false;
+            while (phaser._deltaTime >= slowStep)
+            {
+                phaser._deltaTime -= slowStep;
+                phaser.currentUpdateID = count;
+
+                if (!needToUpdate) {
+                    // 如果处于暂停状态也不进行更新
+                    if (!this._paused && !this.pendingStep)
+                    {
+                        needToUpdate = true;
+                    }
+                }
+                if (needToUpdate) {
+                    phaser.updateFrameDelta();
+                    this.updateLogic(fixedFrameDelta);
+
+                    //  Sync the scene graph after _every_ logic update to account for moved game objects
+                    phaser._calcTransformCount = 0;
+                    phaser.stage.updateTransform();
+                }
+
+                count++;
+
+                if (phaser.forceSingleUpdate && count === 1)
                 {
-                    needToUpdate = true;
+                    break;
                 }
             }
-            if (needToUpdate) {
-                phaser.updateFrameDelta();
-                this.updateLogic(fixedFrameDelta);
 
-                //  Sync the scene graph after _every_ logic update to account for moved game objects
-                phaser._calcTransformCount = 0;
-                phaser.stage.updateTransform();
-            }
-
-            count++;
-
-            if (phaser.forceSingleUpdate && count === 1)
+            // detect spiraling (if the catch-up loop isn't fast enough, the number of iterations will increase constantly)
+            if (count > phaser._lastCount)
             {
-                break;
+                phaser._spiraling++;
             }
-        }
+            else if (count < phaser._lastCount)
+            {
+                // looks like it caught up successfully, reset the spiral alert counter
+                phaser._spiraling = 0;
+            }
 
-        // detect spiraling (if the catch-up loop isn't fast enough, the number of iterations will increase constantly)
-        if (count > phaser._lastCount)
-        {
-            phaser._spiraling++;
-        }
-        else if (count < phaser._lastCount)
-        {
-            // looks like it caught up successfully, reset the spiral alert counter
-            phaser._spiraling = 0;
-        }
+            phaser._lastCount = count;
 
-        phaser._lastCount = count;
-
-        // call the game render update exactly once every frame unless we're playing catch-up from a spiral condition
-        if (needToUpdate)
-            this.updateRender(phaser._deltaTime / slowStep);
-        return needToUpdate;
+            // call the game render update exactly once every frame unless we're playing catch-up from a spiral condition
+            if (needToUpdate)
+                this.updateRender(phaser._deltaTime / slowStep);
+            return needToUpdate;
+        }
+    }
+    catch (e) {
+        this.log.error("{0}", e);
     }
 };
 

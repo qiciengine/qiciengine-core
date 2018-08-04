@@ -12,7 +12,8 @@
  */
 var Storage = qc.Storage = function(game) {
     this.game = game;
-    this.restore();
+    this._data = {};
+    this.timerMap = {};
 };
 
 Storage.prototype = {};
@@ -33,46 +34,77 @@ Object.defineProperties(Storage.prototype, {
  * 还原出所有的数据
  */
 Storage.prototype.restore = function() {
-    var str = window.localStorage.getItem(this.key);
-    if (str) {
-        this._data = JSON.parse(str);
-    }
-    else {
-        this._data = {};
-    }
 };
 
 /**
  * 保存所有数据
  */
 Storage.prototype.save = function() {
-    var key = this.key;
-    if (!key || key === 'com.DefaultCompany.Default') {
-        throw new Error('game.localStorageID should be set for local storage');
-    }
-    var str = JSON.stringify(this._data);
-    window.localStorage.setItem(this.key, str);
 };
 
 /**
  * 保存一条记录
  */
 Storage.prototype.set = function(k, v) {
-    this._data[k] = v;
+    var key = this.key + "_" + k;
+    this._data[key] = v;
+
+    // 写缓存
+    var str = JSON.stringify(v);
+    if (!window.__wx)
+        window.localStorage.setItem(key, str);
+    else
+        wx.setStorage({key: key, data: str});
+};
+
+/**
+ * 保存一条记录，延时写入缓顾存
+ */
+Storage.prototype.delaySet = function(k, v, delay) {
+    if (this.timerMap[k])
+        return;
+
+    var key = this.key + "_" + k;
+    this._data[key] = v;
+
+    var self = this;
+    this.timerMap[k] = this.game.timer.add(delay, function() {
+        delete self.timerMap[k];
+        self.set(k, v);
+    });
 };
 
 /**
  * 删除一条记录
  */
 Storage.prototype.del = function(k) {
-    if (this._data[k])
-        delete this._data[k];
+    var key = this.key + "_" + k;
+    if (this._data[key])
+        delete this._data[key];
+
+    if (!window.__wx)
+        window.localStorage.removeItem(key);
+    else
+        wx.removeStorageSync(key);
 };
 
 /**
  * 检索一条记录
  */
 Storage.prototype.get = function(k) {
-    if (this._data[k])
-        return this._data[k];
+    var key = this.key + "_" + k;
+    if (this._data[key])
+        return this._data[key];
+
+    var str;
+    if (!window.__wx)
+        str = window.localStorage.getItem(key);
+    else
+        str = wx.getStorageSync(key);
+    var v;
+    if (str) {
+        v = JSON.parse(str);
+        this._data[key] = v;
+    }
+    return v;
 };

@@ -226,7 +226,11 @@ Timer.prototype.update = function(time) {
         this.loopEvents.remove(curr);
         if (!curr.__delete) {
             list.push(curr);
-            curr.callback.apply(curr.callbackContext, curr.args);
+            try {
+                curr.callback.apply(curr.callbackContext, curr.args);
+            }
+            catch (e) {
+            }
         }
         curr = this.loopEvents.head;
     }

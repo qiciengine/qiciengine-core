@@ -110,6 +110,15 @@ var UIText = qc.UIText = function(game, parent, uuid) {
         this.overflow = true;
     }
 
+    var self = this;
+    this.onTransformChanged.add(function(wt, pt) {
+        // 使用 cacheAsBitmap 若节点有文本，会导致文本模糊，需要在更新 transform 时重新更新一下文本
+        if (self.textPhaser && self.game.renderInRenderTexture && !self.isUpating) {
+            self.isUpating = true;
+            self.textPhaser.updateText();
+            self.isUpating = false;
+        }
+    })
 };
 
 UIText.prototype = Object.create(qc.Node.prototype);
@@ -137,6 +146,18 @@ UIText.BITMAPFONT = 2;
  */
 UIText._SYMBOL_COLOR = 0;
 UIText._SYMBOL_END_COLOR = 1;
+
+/**
+ * @constant 缩放时是否立即 updateText
+ * @type {boolean}
+ */
+UIText.scaleImmediatelyUpdateText = false;
+
+/**
+ * @constant 缩放时是否不执行 updateText
+ * @type {boolean}
+ */
+UIText.freezeScaleUpdateText = false;
 
 Object.defineProperties(UIText.prototype, {
 
@@ -239,8 +260,9 @@ Object.defineProperties(UIText.prototype, {
     'font' : {
         get : function() {
             var fontName = this.textPhaser.font.replace(/\'/g, "");
-            if(this.fontFamily !== UIText.SYSTEMFONT)
-                return this.game.assets.find(fontName);
+            if(this.fontFamily !== UIText.SYSTEMFONT) {
+                return this.game.assets.find(this._fontKey || fontName);
+            }
             return fontName;
         },
         set : function(font) {
@@ -257,7 +279,19 @@ Object.defineProperties(UIText.prototype, {
                 }
 
                 // webfont采用uuid注册到css中，bitmap在pixi中的索引对应的是url
-                fontName = (this.fontFamily === UIText.WEBFONT ? font.uuid : font.url)
+                if (this.fontFamily === UIText.WEBFONT) {
+                    if (window.__wx && font.wxFontName) {
+                        // 微信的 webfont 已写入本地，通过加载本地字体，取得字体名
+                        fontName = font.wxFontName;
+                    }
+                    else
+                        fontName = font.uuid;
+                    this._fontKey = font.uuid;
+                }
+                else {
+                    fontName = font.url;
+                    this._fontKey = font.url;
+                }
             }
             else {
                 if (typeof font !== 'string') {
@@ -898,7 +932,7 @@ UIText.prototype.postUpdate = function() {
     {
         phaser.updateText();
     }
-    else {
+    else if (!gameObject.cacheEnable){
         var worldScale = gameObject.getWorldScale();
         var preWorldScale = gameObject._preWorldScale;
         var fixedTime = gameObject.game.time.fixedTime;
@@ -913,7 +947,7 @@ UIText.prototype.postUpdate = function() {
             preWorldScale.x = worldScale.x;
             preWorldScale.y = worldScale.y;
             gameObject._worldScaleChangeTime = fixedTime;
-            if (gameObject.scaleDirtyInterval === 0) {
+            if (!UIText.freezeScaleUpdateText && (gameObject.scaleDirtyInterval === 0 || UIText.scaleImmediatelyUpdateText)) {
                 phaser.updateText();
             }
         }
@@ -921,8 +955,8 @@ UIText.prototype.postUpdate = function() {
             // 世界缩放没任何变化，尝试更新 text canvas
             var textWorldScale = phaser._worldScale;
             var dirtyInterval = gameObject.scaleDirtyInterval || textScaleDirtyInterval;
-            if (fixedTime - gameObject._worldScaleChangeTime > dirtyInterval &&
-                (!textWorldScale || worldScale.x !== textWorldScale.x || worldScale.y !== textWorldScale.y)) {
+            if ((fixedTime - gameObject._worldScaleChangeTime > dirtyInterval || UIText.scaleImmediatelyUpdateText) &&
+                (!textWorldScale || worldScale.x !== textWorldScale.x || worldScale.y !== textWorldScale.y) && !UIText.freezeScaleUpdateText) {
                 // 不一致，且时间足够长，需要更新
                 phaser.updateText();
 
@@ -962,6 +996,34 @@ UIText.prototype._copyProperty = function(source, target) {
     source.fill = target.fill;
     source.fontFamily = this.fontFamily;
 };
+
+/**
+ * 根据颜色英文单词取得对应的颜色
+ * @method _getColor
+ * @param {string} colorStr 颜色英文单词
+ * @return {string}
+ * @private
+ */
+UIText.prototype._getColor = function(colorStr) {
+    switch (colorStr) {
+        case 'red': return '#8d1d16';
+        case 'gray': return '#6a6a6a';
+        case 'gold': return '#fde67b';
+        case 'yellow': return '#f3e1a3';
+        case 'blue': return '#3e65c7';
+        case 'brown': return '#322310';
+        case 'green': return '#168d3d';
+        case 'light_green': return '#7fe39e';
+        case 'light_blue': return '#9ed4ec';
+        case 'light_red': return '#f86662';
+        case 'cyan': return '#52b1ff';
+        case 'black': return '#101010';
+        case 'gray2': return '#c0c0c0';
+        case 'orange': return '#f29f55';
+        case 'light_orange': return '#f2c440';
+        case 'orange2': return '#9d621c';
+    }
+}
 
 /**
  * 解析符号
@@ -1007,6 +1069,15 @@ UIText.prototype._parseSymbol = function(parseText, pos, colorArray) {
         if ((colorArray.length > 0))
             result.result = true;
         result.type = UIText._SYMBOL_END_COLOR;
+    }
+    else if (len >= 4) {
+        var colorStr = parseText.slice(pos + 1, i);
+        var color = this._getColor(colorStr);
+        if (color) {
+            result.color = color;
+            result.result = true;
+            result.type = UIText._SYMBOL_COLOR;
+        }
     }
     // TODO: 添加各种符号
 
@@ -1176,6 +1247,10 @@ UIText.prototype._refreshWebFont = function(fontName) {
         fontName = "'" + fontName + "'";
     }
     if (fontName === this.textPhaser.font) {
+        if (window.__wx)
+            // 重新设置一下字体，会更新 webfont 成本地字体文件
+            this.font = this.font;
+
         this.textPhaser.dirty = true;
         if (this._glowText) {
             this._glowText.dirty = true;
@@ -1313,6 +1388,7 @@ UIText._phaserUpdateText = function() {
     canvas.width = Math.max(Math.ceil(canvasWidth), 1);
     canvas.height = Math.max(Math.ceil(canvasHeight), 1);
 
+    context.save();
     this._canvasDownScale = new qc.Point(1 / canvasScale, 1 / canvasScale);
     context.scale(resolution * canvasScale, resolution * canvasScale);
 
@@ -1355,7 +1431,6 @@ UIText._phaserUpdateText = function() {
     {
         context.clearRect(0, 0, this.realWidth, this.realHeight);
     }
-
     context.font = this.style.font;
     context.strokeStyle = this.style.stroke;
     context.textBaseline = "middle";
@@ -1444,6 +1519,7 @@ UIText._phaserUpdateText = function() {
         }
     }
 
+    context.restore();
     this.updateTexture();
 
     // 并非跑在 webgl 模式下，如果是 webgl 模式，更新 render texture
@@ -1461,7 +1537,8 @@ UIText._phaserUpdateText = function() {
     _qc._adjustTextPos();
 
     // 更新世界坐标，并标记缓存为干净
-    this.getWorldTransform();
+    if (!_qc.game.renderInRenderTexture)
+        this.getWorldTransform();
     this.dirty = false;
 };
 

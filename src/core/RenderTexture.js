@@ -61,7 +61,7 @@ qc.RenderTexture.prototype.directRenderWebGL = function(displayObject, offset, c
         };
         gl.replace = true;
     }
-    
+
 
     gl.viewport(0, 0, this.width * this.resolution, this.height * this.resolution);
 
@@ -115,6 +115,8 @@ qc.RenderTexture.prototype.renderWebGL = function(displayObject, matrix, clear)
     if(!this.valid)return;
     //TOOD replace position with matrix..
 
+    displayObject.game._qc.renderInRenderTexture = true;
+
     //Lets create a nice matrix to apply to our display object. Frame buffers come in upside down so we need to flip the matrix
     var wt = displayObject.getWorldTransform();
     wt.identity();
@@ -131,6 +133,9 @@ qc.RenderTexture.prototype.renderWebGL = function(displayObject, matrix, clear)
     {
         children[i].updateTransform();
     }
+
+    displayObject.game._qc.renderInRenderTexture = false;
+
     // time for the webGL fun stuff!
     var gl = this.renderer.gl;
 
@@ -161,6 +166,8 @@ PIXI.RenderTexture.prototype.renderCanvas = function(displayObject, matrix, clea
 {
     if(!this.valid)return;
 
+    displayObject.game._qc.renderInRenderTexture = true;
+
     var wt = displayObject.worldTransform;
     wt.identity();
     if(matrix)wt.append(matrix);
@@ -175,6 +182,8 @@ PIXI.RenderTexture.prototype.renderCanvas = function(displayObject, matrix, clea
     {
         children[i].updateTransform();
     }
+
+    displayObject.game._qc.renderInRenderTexture = false;
 
     if(clear)this.textureBuffer.clear();
 

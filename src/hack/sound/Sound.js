@@ -217,7 +217,7 @@ Phaser.Sound.prototype.play = function (marker, position, volume, loop, forceRes
         }
         else
         {
-            if (this._sound && (this.game.device.cocoonJS || this._sound.readyState === 4))
+            if (this._sound && (this.game.device.cocoonJS || this._sound.readyState === 4 || (window.__wx && this._sound.readyState >= 2)))
             {
                 this._sound.play();
                 //  This doesn't become available until you call play(), wonderful ...

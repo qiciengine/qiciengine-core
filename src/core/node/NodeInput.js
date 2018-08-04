@@ -185,7 +185,21 @@ Object.defineProperties(Node.prototype, {
                 this._onInteractive.dispatch();
             }
         }
-    }
+    },
+
+    /**
+     * 是否向上传递拖拽等事件
+     *
+     * @property {boolean} passEvent
+     */
+    "passEvent": {
+        get: function() {
+            return this._passEvent;
+        },
+        set: function(v) {
+            this._passEvent = v;
+        }
+    },
 });
 
 /**
@@ -245,21 +259,27 @@ Node.prototype.canHandleInputEvent = function(eventType) {
  * @param eventType {string | [string]} - 事件类型
  * @returns {qc.Node | null} - 可以处理事件的节点或者null
  */
-Node.prototype.getInputEventHandle = function(eventType) {
+Node.prototype.getInputEventHandle = function(eventType, x, y) {
     var eventList = Array.isArray(eventType) ? eventType : [eventType];
     var node = this;
     // 根节点为stage,当找到stage时退出查找
     var rootNode = this.game.stage;
     var i;
+    var ret = [];
     while (node && node !== rootNode) {
         i = eventList.length;
+        var localPoint = node.phaser.worldTransform.applyInverse({x: x, y: y});
         while (i--) {
-            if (node.canHandleInputEvent(eventList[i]))
-                return node;
+            if (node.canHandleInputEvent(eventList[i]) && node.checkHit(localPoint.x, localPoint.y)) {
+                ret.push(node);
+                if (!node.passEvent)
+                    return ret;
+                break;
+            }
         }
         node = node.parent;
     }
-    return null;
+    return ret;
 };
 
 /**
@@ -267,21 +287,27 @@ Node.prototype.getInputEventHandle = function(eventType) {
  * @param eventType {string | [string]} - 事件类型
  * @returns {[qc.Node, String] | null} - 可以处理事件的节点及事件或者null
  */
-Node.prototype.getInputEventHandleAndEventType = function(eventType) {
+Node.prototype.getInputEventHandleAndEventType = function(eventType, x, y) {
     var eventList = Array.isArray(eventType) ? eventType : [eventType];
     var node = this;
     // 根节点为stage,当找到stage时退出查找
     var rootNode = this.game.stage;
     var i;
+    var ret = [];
     while (node && node !== rootNode) {
         i = eventList.length;
+        var localPoint = node.phaser.worldTransform.applyInverse({x: x, y: y});
         while (i--) {
-            if (node.canHandleInputEvent(eventList[i]))
-                return [node, eventList[i]];
+            if (node.canHandleInputEvent(eventList[i]) && node.checkHit(localPoint.x, localPoint.y)) {
+                ret.push([node, eventList[i]]);
+                if (!node.passEvent)
+                    return ret;
+                break;
+            }
         }
         node = node.parent;
     }
-    return null;
+    return ret;
 };
 
 /**

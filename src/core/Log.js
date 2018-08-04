@@ -44,7 +44,10 @@ Log.prototype.trace = function() {
  */
 Log.prototype.important = function() {
     var content = qc.Util.formatString.apply(null, arguments);
-    console.log('%c' + content, 'color:green');
+    if (!window.__wx)
+        console.log('%c' + content, 'color:green');
+    else
+        console.log(content);
 
     // 有配置远程日志服务器地址，则发送日志到远程服务器
     if (this.game.remoteLogUrl)
@@ -61,7 +64,10 @@ Log.prototype.important = function() {
  */
 Log.prototype.error = function() {
     var content = qc.Util.formatString.apply(null, arguments);
-    console.log('%c' + content, 'color:red');
+    if (!window.__wx)
+        console.log('%c' + content, 'color:red');
+    else
+        console.log(content);
 
     // 打印错误堆栈
     var errorStack;
@@ -69,7 +75,7 @@ Log.prototype.error = function() {
         if (arguments[i] && arguments[i].stack) {
             errorStack = arguments[i].stack;
             console.error(errorStack);
-            
+
             break;
         }
     }
@@ -78,7 +84,7 @@ Log.prototype.error = function() {
     if (this.game.remoteLogUrl)
         qc.AssetUtil.post(this.game.remoteLogUrl + '/remoteLog', Date.now() + ' ' + errorStack ? errorStack : content, function(r){});
 
-    if (!errorStack)
+    if (!errorStack && !window.__wx)
         console.trace();
 };
 

@@ -97,7 +97,7 @@ BaseInputModule.prototype._init = function() {
 /**
  * 创建一个点事件记录对象
  * @param deviceId
- * @returns {{pointerId: Number, deviceId: Number, downNode: null, draggingNode: null, overNode: null}}
+ * @returns {{pointerId: Number, deviceId: Number, downNodeList: null, draggingNodeList: null, overNode: null}}
  * @private
  */
 BaseInputModule.prototype._buildPointerRecord = function(deviceId, isMouse) {
@@ -119,14 +119,14 @@ BaseInputModule.prototype._buildPointerRecord = function(deviceId, isMouse) {
         isMouse : isMouse,
 
         /**
-         * @property {qc.Node | null} downNode - 位于触摸点下的节点
+         * @property {Array | null} downNodeList - 位于触摸点下的节点列表
          */
-        downNode : null,
+        downNodeList : null,
 
         /**
-         * @property {qc.Node | null} draggingNode - 当前拖拽的节点
+         * @property {Array | null} draggingNodeList - 当前拖拽的节点列表
          */
-        draggingNode : null,
+        draggingNodeList : null,
 
         /**
          * @property {qc.Node | null} overNode - 光标移动经过的节点
@@ -177,17 +177,21 @@ BaseInputModule.prototype.reset = function() {
             event.deviceId = NaN;
         }
 
-        if (event.downNode !== null) {
-            var upEvent = new qc.PointerEvent(pointer);
-            event.downNode.fireInputEvent('onUp', upEvent);
-            event.downNode = null;
+        if (event.downNodeList) {
+            for (var i = 0; i < event.downNodeList.length; i++) {
+                var upEvent = new qc.PointerEvent(pointer);
+                event.downNodeList[i].fireInputEvent('onUp', upEvent);
+            }
+            event.downNodeList = null;
         }
 
         // 如果有拖拽对象，则取消拖拽
-        if (event.draggingNode) {
-            var dragEndEvent = new qc.DragEndEvent(pointer, null);
-            event.draggingNode.fireInputEvent('onDragEnd', dragEndEvent);
-            event.draggingNode = null;
+        if (event.draggingNodeList) {
+            for (var i = 0; i < event.draggingNodeList.length; i++) {
+                var dragEndEvent = new qc.DragEndEvent(pointer, null);
+                event.draggingNodeList[i].fireInputEvent('onDragEnd', dragEndEvent);
+            }
+            event.draggingNodeList = null;
         }
 
         // 如果有经过的对象，则调用移出
@@ -206,11 +210,27 @@ BaseInputModule.prototype.reset = function() {
  * @param event
  */
 BaseInputModule.prototype.checkEventRecordNode = function(event) {
-    if (event.draggingNode && event.draggingNode._destroy) {
-        event.draggingNode = null;
+    if (event.draggingNodeList) {
+        var list = [];
+        for (var i = 0; i < event.draggingNodeList.length; i++) {
+            if (event.draggingNodeList[i]._destroy)
+                list.push(event.draggingNodeList[i]);
+        }
+        for (var i = 0; i < list.length; i++)
+            event.draggingNodeList.remove(list[i]);
+        if (event.draggingNodeList.length === 0)
+            event.draggingNodeList = null;
     }
-    if (event.downNode && event.downNode._destroy) {
-        event.downNode = null;
+    if (event.downNodeList) {
+        var list = [];
+        for (var i = 0; i < event.downNodeList.length; i++) {
+            if (event.downNodeList[i]._destroy)
+                list.push(event.downNodeList[i]);
+        }
+        for (var i = 0; i < list.length; i++)
+            event.downNodeList.remove(list[i]);
+        if (event.downNodeList.length === 0)
+            event.downNodeList = null;
     }
     if (event.overNode && event.overNode._destroy) {
         event.overNode = null;
@@ -253,18 +273,18 @@ BaseInputModule.prototype.onPointerDown = function(id, x, y) {
         this.doPointerExitAndEnter(event, overEvent, node);
     }
 
-    var currNode = node ? node.getInputEventHandle(this._needHandleEventTypes) : null;
+    var currNodeList = node ? node.getInputEventHandle(this._needHandleEventTypes, x, y) : [];
     // 没有响应的节点
-    if (!currNode) {
+    if (currNodeList.length === 0) {
         return;
     }
 
     // 获取节点中可以触发按下的节点并处理
-    event.downNode = currNode;
+    event.downNodeList = currNodeList;
     var pointEvent = new qc.PointerEvent(pointer);
     // 执行按下事件
-    if (currNode) {
-        currNode.fireInputEvent('onDown', pointEvent);
+    for (var i = 0; i < currNodeList.length; i++) {
+        currNodeList[i].fireInputEvent('onDown', pointEvent);
     }
 };
 
@@ -295,52 +315,89 @@ BaseInputModule.prototype.onPointerUp = function(id, x, y) {
     this.checkEventRecordNode(event);
 
     // 获取当前点击位置下的物件
-    var node = this._fetchNodeInParent(this.game.world, x, y, event.draggingNode);
-    var currNode = node ? node.getInputEventHandle(this._needHandleEventTypes) : null;
+    var node = this._fetchNodeInParent(this.game.world, x, y);
+    var currNodeList = node ? node.getInputEventHandle(this._needHandleEventTypes, x, y) : [];
     var upEvent = new qc.PointerEvent(pointer);
 
     // 优先处理拖拽事件
-    if (event.draggingNode !== null) {
+    if (event.draggingNodeList && event.draggingNodeList.length > 0) {
         // 作为拖拽的接收对象时，不考虑点击事件
-        var dropNode = node ? node.getInputEventHandle('onDragDrop') : null;
-        var dropEvent = new qc.DropEvent(pointer, event.draggingNode);
-        // 接收对象是否运行当前物件拖拽到
-        if (dropNode && dropNode.checkAllowDrop(event.draggingNode)) {
-            dropNode.fireInputEvent('onDragDrop', dropEvent);
-        }
+        var dropNodeList = node ? node.getInputEventHandle('onDragDrop', x, y) : [];
+        for (var i = 0; i < event.draggingNodeList.length; i++) {
+            var draggingNode = event.draggingNodeList[i];
+            var dropEvent = new qc.DropEvent(pointer, draggingNode);
+            for (var j = 0; j < dropNodeList; j++) {
+                var dropNode = dropNodeList[j];
 
-        // 处理被拖拽物体的回调
-        var dragEndEvent = new qc.DragEndEvent(pointer, dropEvent.result);
-        event.draggingNode.fireInputEvent('onDragEnd', dragEndEvent);
-        event.draggingNode = null;
+                // 接收对象是否运行当前物件拖拽到
+                if (dropNode && dropNode.checkAllowDrop(draggingNode)) {
+                    dropNode.fireInputEvent('onDragDrop', dropEvent);
+                }
+            }
+            // 处理被拖拽物体的回调
+            var dragEndEvent = new qc.DragEndEvent(pointer, dropEvent.result);
+            draggingNode.fireInputEvent('onDragEnd', dragEndEvent);
+        }
+        event.draggingNodeList = null;
     }
     else {
         // 获取当前点击位置下的物件
-        if (currNode && currNode === event.downNode) {
-            var clickEvent = new qc.ClickEvent(pointer);
-            if (pointer.previousStatus.length) {
-                var stat = pointer.previousStatus[0];
-                var previousStat = pointer.previousStatus[1];
-                clickEvent.isTap = stat.upTime - stat.downTime < this.tapDuringTime;
-                clickEvent.isDoubleTap = previousStat && (stat.upTime - previousStat.downTime) < 2 * this.tapDuringTime;
-                clickEvent.isDoubleClick = previousStat && (stat.upTime - previousStat.downTime) < this.doubleClickDuringTime;
+        for (var i = 0; i < currNodeList.length; i++) {
+            var currNode = currNodeList[i];
+            if (qc.Util.isArray(event.downNodeList)) {
+                for (var j = 0; j < event.downNodeList.length; j++) {
+                    var downNode = event.downNodeList[j];
+                    if (currNode && currNode === downNode) {
+                        var clickEvent = new qc.ClickEvent(pointer);
+                        if (pointer.previousStatus.length) {
+                            var stat = pointer.previousStatus[0];
+                            var previousStat = pointer.previousStatus[1];
+                            clickEvent.isTap = stat.upTime - stat.downTime < this.tapDuringTime;
+                            clickEvent.isDoubleTap = previousStat && (stat.upTime - previousStat.downTime) < 2 * this.tapDuringTime;
+                            clickEvent.isDoubleClick = previousStat && (stat.upTime - previousStat.downTime) < this.doubleClickDuringTime;
+                        }
+                        // 当按下的节点和弹起的节点相同时，触发click事件
+                        currNode.fireInputEvent('onClick', clickEvent);
+                        break;
+                    }
+                }
             }
-            // 当按下的节点和弹起的节点相同时，触发click事件
-            currNode.fireInputEvent('onClick', clickEvent);
         }
     }
     // 处理弹起事件
-    if (event.downNode) {
-        upEvent.downInside = true;
-        upEvent.upInside = event.downNode === currNode;
-        event.downNode.fireInputEvent('onUp', upEvent);
+    if (qc.Util.isArray(event.downNodeList)) {
+        for (var i = 0; i < event.downNodeList.length; i++) {
+            var downNode = event.downNodeList[i];
+            upEvent.downInside = true;
+            upEvent.upInside = false;
+            for (var j = 0; j < currNodeList.length; j++) {
+                var currNode = currNodeList[j];
+                if (downNode === currNode) {
+                    upEvent.upInside = true;
+                    break;
+                }
+            }
+            downNode.fireInputEvent('onUp', upEvent);
+        }
     }
-    if (currNode && currNode !== event.downNode) {
+    for (var i = 0; i < currNodeList.length; i++) {
+        var currNode = currNodeList[i];
         upEvent.downInside = false;
         upEvent.upInside = true;
-        currNode.fireInputEvent('onUp', upEvent);
+        var flag;
+        if (qc.Util.isArray(event.downNodeList)) {
+            for (var j = 0; j < event.downNodeList.length; j++) {
+                var downNode = event.downNodeList[j];
+                if (currNode === downNode) {
+                    flag = true;
+                    break;
+                }
+            }
+        }
+        if (!flag)
+            currNode.fireInputEvent('onUp', upEvent);
     }
-    event.downNode = null;
+    event.downNodeList = null;
 
     // 当不是鼠标事件时，额外处理进入离开事件
     if (!event.isMouse) {
@@ -374,70 +431,82 @@ BaseInputModule.prototype.onPointerMove = function(id, x, y) {
         this.doPointerExitAndEnter(event, overEvent, node);
     }
 
-    if (!event.draggingNode) {
+    if (!event.draggingNodeList || event.draggingNodeList.length === 0) {
         var startNode = this._fetchNodeInParent(this.game.world, pointer.startX, pointer.startY);
         var tmp = { x : pointer.x, y : pointer.y };
-        var currNode = null;
+        var currNodeList = [];
         do {
             if (!startNode)
                 break;
-            var nodeAndEventType = startNode.getInputEventHandleAndEventType(this._needHandleClickAndDragType);
-            if (!nodeAndEventType)
+            var nodeAndEventType = startNode.getInputEventHandleAndEventType(this._needHandleClickAndDragType, pointer.startX, pointer.startY);
+            if (nodeAndEventType.length === 0)
                 break;
             // 如果节点优先响应点击时，需要移动距离大于阀值
-            if (nodeAndEventType[1] === 'onClick' &&
-                (Math.abs(pointer.distanceX) < this._startDragMoveDistance ||
-                Math.abs(pointer.distanceY) < this._startDragMoveDistance)) {
-                break;
+            for (var i = 0; i < nodeAndEventType.length; i++) {
+                var info = nodeAndEventType[i];
+                if (info[1] === 'onClick' &&
+                    (Math.abs(pointer.distanceX) < this._startDragMoveDistance ||
+                    Math.abs(pointer.distanceY) < this._startDragMoveDistance)) {
+                    continue;
+                }
+                currNodeList.push(info[0]);
             }
-            currNode = nodeAndEventType[0];
 
         } while(false);
 
         var dragStartEvent = new qc.DragStartEvent(pointer);
         pointer._x = pointer.startX;
         pointer._y = pointer.startY;
-        if (currNode) {
-            currNode.fireInputEvent('onDragStart', dragStartEvent);
+        for (var i = 0; i < currNodeList.length; i++) {
+            currNodeList[i].fireInputEvent('onDragStart', dragStartEvent);
         }
         pointer._x = tmp.x;
         pointer._y = tmp.y;
-        event.draggingNode = currNode;
+        event.draggingNodeList = currNodeList;
     }
-    
+
     // 还没有拖拽对象
-    if (!event.draggingNode &&
+    if ((!event.draggingNodeList || event.draggingNodeList.length === 0) &&
         (Math.abs(pointer.distanceX) >= this._startDragMoveDistance ||
         Math.abs(pointer.distanceY) >= this._startDragMoveDistance)) {
         // 从开始位置获取事件响应对象
         var startNode = this._fetchNodeInParent(this.game.world, pointer.startX, pointer.startY);
         var tmp = { x : pointer.x, y : pointer.y };
         // 作为拖拽的接收对象时，不考虑其他事件
-        var currNode = startNode ? startNode.getInputEventHandle(this._needHandleDragTypes) : null;
+        var currNodeList = startNode ? startNode.getInputEventHandle(this._needHandleDragTypes, pointer.startX, pointer.startY) : [];
         var dragStartEvent = new qc.DragStartEvent(pointer);
         pointer._x = pointer.startX;
         pointer._y = pointer.startY;
-        if (currNode) {
-            currNode.fireInputEvent('onDragStart', dragStartEvent);
+        for (var i = 0; i < currNodeList.length; i++) {
+            currNodeList[i].fireInputEvent('onDragStart', dragStartEvent);
         }
         pointer._x = tmp.x;
         pointer._y = tmp.y;
-        event.draggingNode = currNode;
+        event.draggingNodeList = currNodeList;
     }
 
     // 处理拖拽事件
-    if (event.draggingNode) {
+    if (event.draggingNodeList && event.draggingNodeList.length > 0) {
         // 作为拖拽的接收对象时，不考虑其他事件
-        var currNode = node ? node.getInputEventHandle('onDragDrop') : null;
-        var dropEvent = new qc.DropEvent(pointer, event.draggingNode);
+        var currNodeList = node ? node.getInputEventHandle('onDragDrop', x, y) : [];
 
         // 接收对象是否运行当前物件拖拽到
-        if (currNode && (!currNode.isAllowDrop || currNode.isAllowDrop(event.draggingNode))) {
-            currNode.fireInputEvent('onDragOver', dropEvent);
+        for (var i = 0; i < currNodeList.length; i++) {
+            var currNode = currNodeList[i];
+            for (var j = 0; j < event.draggingNodeList.length; j++) {
+                var draggingNode = event.draggingNodeList[j];
+                var dropEvent = new qc.DropEvent(pointer, draggingNode);
+                if (currNode && (!currNode.isAllowDrop || currNode.isAllowDrop(draggingNode))) {
+                    currNode.fireInputEvent('onDragOver', dropEvent);
+                }
+            }
         }
 
         var dragEvent = new qc.DragEvent(pointer);
-        event.draggingNode.fireInputEvent('onDrag', dragEvent);
+        for (var j = 0; j < event.draggingNodeList.length; j++) {
+            var draggingNode = event.draggingNodeList[j];
+            draggingNode.fireInputEvent('onDrag', dragEvent);
+        }
     }
 };
 
@@ -451,8 +520,9 @@ BaseInputModule.prototype.onWheel = function(deltaX, deltaY) {
     if (this.input.hasCursor) {
         var cursorPoint = this.input.cursorPosition;
         var node = this._fetchNodeInParent(this.game.world, cursorPoint.x, cursorPoint.y);
-        var eventNode = node ? node.getInputEventHandle('onWheel') : null;
-        if (eventNode) {
+        var eventNodeList = node ? node.getInputEventHandle('onWheel') : [];
+        for (var i = 0; i < eventNodeList.length; i++) {
+            var eventNode = eventNodeList[i];
             var wheelEvent = new qc.WheelEvent(-deltaX, -deltaY);
             eventNode.fireInputEvent('onWheel', wheelEvent);
             // 更新光标的位置
@@ -464,7 +534,7 @@ BaseInputModule.prototype.onWheel = function(deltaX, deltaY) {
 /**
  * 光标移动
  * @param x
- * @param y
+ param* @param y
  */
 BaseInputModule.prototype.onCursorMove = function(x, y) {
     // 获取当前点击位置下的物件
@@ -572,7 +642,7 @@ BaseInputModule.prototype.findCommonRoot = function(one, two) {
 BaseInputModule.prototype._fetchNodeInParent = function(node, x, y, except) {
     if (!node || !node.phaser.visible)
         return null;
-    
+
     var localPoint = node.phaser.worldTransform.applyInverse({x: x, y: y});
 
     // 如果节点是world需要排除区域外的点
@@ -582,7 +652,13 @@ BaseInputModule.prototype._fetchNodeInParent = function(node, x, y, except) {
     }
 
     // 最初的遍历从world开始，故而不用判定node是否为except的子节点
-    if (node === except) {
+    if (qc.Util.isArray(except)) {
+        for (var i = 0; i < except.length; i++) {
+            if (node === except[i])
+                return null;
+        }
+    }
+    else if (node === except) {
         return null;
     }
 

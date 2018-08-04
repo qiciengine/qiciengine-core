@@ -34,7 +34,8 @@ Phaser.Loader.prototype.asyncComplete = function (file, errorMessage) {
     file.error = !!errorMessage;
 
     // 增加返回错误码的判断
-    if (file.requestObject && 
+    if (!window.__wx &&
+        file.requestObject && 
         file.requestObject.status !== 200 &&
         file.requestObject.status !== 304) {
         file.error = true;

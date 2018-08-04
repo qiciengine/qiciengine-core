@@ -64,11 +64,20 @@ Object.defineProperties(Sound.prototype, {
             return this.game.assets.find(this.soundPhaser.key);
         },
         set : function(v) {
+            var oldAudio = this.audio;
             var soundPhaser = this.soundPhaser;
             if (!v) {
+                if (window.__wx) {
+                    // 微信需要将旧的音频实例也销毁
+                    if (oldAudio)
+                        this.game.assets.unload(oldAudio);
+                }
                 soundPhaser.key = v;
                 return;
             }
+
+            if (oldAudio && oldAudio.key === v.key)
+                return;
 
             // 重新设置声音
             var key = v.key;
@@ -79,8 +88,16 @@ Object.defineProperties(Sound.prototype, {
                     oldVolume = this.volume;
 
                 soundPhaser.destroy();
+                if (window.__wx) {
+                    // 微信需要将旧的音频实例也销毁
+                    if (oldAudio)
+                        this.game.assets.unload(oldAudio);
+                }
+
                 soundPhaser = this.soundPhaser = new Phaser.Sound(this.game.phaser, key);
                 soundPhaser._qc = this;
+                // 注册信号回调
+                this._related();
                 this.game.phaser.sound._sounds.push(soundPhaser);
 
                 // 重置老值
@@ -317,6 +334,13 @@ Sound.prototype.removeMarker = function() {
  * @internal
  */
 Sound.prototype.onDestroy = function() {
+    if (window.__wx) {
+        // 微信需要将旧的音频资源也销毁
+        var oldAudio = this.audio;
+        if (oldAudio)
+            this.game.assets.unload(oldAudio);
+    }
+
     this.game.phaser.sound.remove(this.soundPhaser);
     // 调用父类的析构
     qc.Node.prototype.onDestroy.call(this);

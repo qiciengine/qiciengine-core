@@ -16,7 +16,7 @@ Phaser.Loader.prototype.loadAudioTag = function (file) {
         file.data = new Audio();
         file.data.name = file.key;
         file.data.preload = 'auto';
-        file.data.src = this.transformUrl(file.url, file);
+        file.data.src = file.localPath || this.transformUrl(file.url, file);
 
         this.fileComplete(file);
     }
@@ -46,7 +46,7 @@ Phaser.Loader.prototype.loadAudioTag = function (file) {
         };
 
         file.data.preload = 'auto';
-        file.data.src = this.transformUrl(file.url, file);
+        file.data.src = file.localPath || this.transformUrl(file.url, file);
         file.data.addEventListener('canplaythrough', playThroughEvent, false);
         file.data.addEventListener('stalled', onStalled, false);
 

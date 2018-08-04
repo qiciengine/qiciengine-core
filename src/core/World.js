@@ -33,6 +33,12 @@ var World = qc.World = function(phaser) {
     // 待删除的节点列表
     self._toDestroyQ = [];
 
+    if (window.__wx) {
+        self.backDomRoot = null;
+        self.frontDomRoot = null;
+        return;
+    }
+
     /**
      * property {Dom} backDomRoot - 处于底层的Dom根节点
      * @readonly
@@ -220,9 +226,10 @@ World.prototype.addToDestroy = function(node) {
  */
 World.prototype.updateDomRoot = function() {   
     // 输入状态不进行更新
-    if (this.game.isBooted && this.game.input.inputting) {
+    if (window.__wx || this.game.isBooted && this.game.input.inputting) {
         return;
-    }    
+    }
+
     var frontStyle = this.frontDomRoot.style;
     var backStyle = this.backDomRoot.style;
     var canvasStyle = this.game.canvas.style;        

@@ -33,15 +33,17 @@ var InputField = qc.InputField = function(game, parent, uuid) {
 
     // 创建div做交互，否则有些手机无法在input.nativeMode为false时无法弹出输入键盘
     var div = self.div = document.createElement('div');
-    var style = div.style;
-    style.setProperty("-webkit-tap-highlight-color", "rgba(0, 0, 0, 0)", null);
-    style.position = 'absolute';
-    style.padding = 0;
-    style.margin = 0;
-    style.border = 0;
-    style.outline = 0;
-    style.background = 'none';
-    self.game.world.frontDomRoot.appendChild(div);
+    if (!window.__wx) {
+        var style = div.style;
+        style.setProperty("-webkit-tap-highlight-color", "rgba(0, 0, 0, 0)", null);
+        style.position = 'absolute';
+        style.padding = 0;
+        style.margin = 0;
+        style.border = 0;
+        style.outline = 0;
+        style.background = 'none';
+        self.game.world.frontDomRoot.appendChild(div);
+    }
 
     var restore = uuid !== undefined;
     if (restore !== true) {
@@ -97,9 +99,16 @@ var InputField = qc.InputField = function(game, parent, uuid) {
             self.state = qc.UIState.PRESSED;
         }
     });
-    this.onUp.add(function() {
+    this.onUp.add(function(node, event) {
         if (self.state === qc.UIState.PRESSED) {
             self.state = qc.UIState.NORMAL;
+        }
+
+        if (window.__wx) {
+            // 微信使用该事件监听点击事件
+            if (self.state !== qc.UIState.DISABLED) {
+                self.startEditing();
+            }
         }
     });
 
@@ -114,7 +123,7 @@ var InputField = qc.InputField = function(game, parent, uuid) {
     this.width = 120;
     this.height = 30;
 
-    this._checkVisibility(); 
+    this._checkVisibility();
 };
 
 /**
@@ -286,7 +295,10 @@ Object.defineProperties(InputField.prototype, {
      * @property {number} characterLimit - 字符数限制
      */
     characterLimit : {
-        get : function() { return this._characterLimit; },
+        get : function() {
+            if (window.__wx && this._characterLimit === -1) return 99999;
+            return this._characterLimit;
+        },
         set : function(v) {
             if (this.characterLimit === v) return;
             this._characterLimit = v;
@@ -420,111 +432,134 @@ InputField.prototype.startEditing = function() {
     }
     var input = this._input;
     if (!input) {
-        // 创建TextArea组件
-        if (this.lineType === InputField.MULTI_LINE) {
-            input = self._input = document.createElement('textarea');
-            input.onkeydown = function (event) {
-                if (Keyboard.ESC === event.keyCode) {
-                    self.cancelEditing();
+        if (window.__wx) {
+            var config = {
+                defaultValue: self.text,
+                maxLength: self.characterLimit,
+                multiple: self.lineType === InputField.MULTI_LINE,
+                confirmHold: true,
+                confirmType: "done",
+                success: function() {
+                    self._input = { value: self.text, _lastValue: self.text };
+
+                    // 监听键盘事件
+                    var inputcallback = function(res) {
+                        self._input._lastValue = self._input.value;
+                        self._input.value = res.value;
+                    }
+                    var comfirmcallback = function(res) {
+                        self._input._lastValue = self._input.value;
+                        self._input.value = res.value;
+                        self.stopEditing();
+                    }
+                    var completecallback = function(res) {
+                        self.cancelEditing();
+                    }
+                    wx.onKeyboardConfirm(comfirmcallback);
+                    wx.onKeyboardInput(inputcallback);
+                    wx.onKeyboardComplete(completecallback);
+                },
+                fail: function(e) {
+                    self.game.log.trace("showKeyboard fail : {0}", JSON.stringify(e));
                 }
             };
+            wx.showKeyboard(config);
         }
-        // 创建普通Input组件
         else {
-            input = self._input = document.createElement('input');
-            input.onkeydown = function (event) {
-                if (Keyboard.ENTER === event.keyCode) {
+            // 创建TextArea组件
+            if (this.lineType === InputField.MULTI_LINE) {
+                input = self._input = document.createElement('textarea');
+                input.onkeydown = function (event) {
+                    if (Keyboard.ESC === event.keyCode) {
+                        self.cancelEditing();
+                    }
+                };
+                switch (self.contentType) {
+                    case InputField.PASSWORD :
+                        input.type = 'password';
+                        break;
+                    case InputField.EMAIL :
+                        input.type = 'email';
+                        break;
+                    case InputField.TEL :
+                        input.type = 'tel';
+                        break;
+                    case InputField.INT:
+                    case InputField.NUMBER:
+                        input.type = 'number';
+                        break;
+                    default :
+                        input.type = 'text';
+                        break;
+                }
+                switch (textComponent.alignH) {
+                    case UIText.LEFT:
+                        input.style.textAlign = 'left';
+                        break;
+                    case UIText.RIGHT:
+                        input.style.textAlign = 'right';
+                        break;
+                    default:
+                        input.style.textAlign = 'center';
+                        break;
+                }
+                switch (textComponent.alignV) {
+                    case UIText.TOP:
+                        input.style.verticalAlign = 'top';
+                        break;
+                    case UIText.BOTTOM:
+                        input.style.verticalAlign = 'bottom';
+                        break;
+                    default:
+                        input.style.verticalAlign = 'middle';
+                        break;
+                }
+            }
+            if (this.characterLimit > 0) {
+                input.setAttribute('maxlength', this.characterLimit);
+            }
+            input._qc = self;
+            input.value = self.text;
+            var style = input.style;
+            style.position = 'absolute';
+            style.padding = 0;
+            style.margin = 0;
+            style.border = 0;
+            style.outline = 0;
+            style.background = 'none';
+            input.onblur = function (event) {
+                self.stopEditing();
+            };
+            input._handleClick = function(event) {
+                // 点击在div组件上不做处理
+                if (event.target !== self.div && event.target !== input) {
                     self.stopEditing();
                 }
-                else if (Keyboard.ESC === event.keyCode) {
-                    self.cancelEditing();
-                }
             };
-            switch (self.contentType) {
-                case InputField.PASSWORD :
-                    input.type = 'password';
-                    break;
-                case InputField.EMAIL :
-                    input.type = 'email';
-                    break;
-                case InputField.TEL :
-                    input.type = 'tel';
-                    break;
-                case InputField.INT:
-                case InputField.NUMBER:
-                    input.type = 'number';
-                    break;
-                default :
-                    input.type = 'text';
-                    break;
-            }
-            switch (textComponent.alignH) {
-                case UIText.LEFT:
-                    input.style.textAlign = 'left';
-                    break;
-                case UIText.RIGHT:
-                    input.style.textAlign = 'right';
-                    break;
-                default:
-                    input.style.textAlign = 'center';
-                    break;
-            }
-            switch (textComponent.alignV) {
-                case UIText.TOP:
-                    input.style.verticalAlign = 'top';
-                    break;
-                case UIText.BOTTOM:
-                    input.style.verticalAlign = 'bottom';
-                    break;
-                default:
-                    input.style.verticalAlign = 'middle';
-                    break;
-            }
+            var dom = self.game.world.frontDomRoot;
+            dom.addEventListener('mousedown', input._handleClick, false);
+            dom.addEventListener('touchstart', input._handleClick, false);
+            self.game.input._inputting++;
+
+            // 再套一层div，否则由于frontDomRoot的overflow为hidden，
+            // 如果input超出边界浏览器会修改frontDomRoot的scrollLeft和scrollTop参数，
+            // 导致Dom元素布局偏差，所以特意搞了inputDiv，让浏览器修改inputDiv滚动值而不影响其他人
+            var inputDiv = document.createElement('div');
+            inputDiv.style.width = this.game.canvas.style.width;
+            inputDiv.style.height = this.game.canvas.style.height;
+            inputDiv.style.position = 'absolute';
+            inputDiv.style.overflow = 'hidden';
+            inputDiv.appendChild(input);
+
+            dom.appendChild(inputDiv);
+            self._updateInput(input);
+            input.focus();
+
+            // textComponent的WorldTransform变化时需要更新native元素位置
+            self._updateNativeInput();
+            textComponent.phaser.worldTransformChangedCallback = this._updateNativeInput.bind(self);
+            textComponent.phaser.worldTransformChangedContext = textComponent;
         }
-        if (this.characterLimit > 0) {
-            input.setAttribute('maxlength', this.characterLimit);
-        }
-        input._qc = self;
-        input.value = self.text;
-        var style = input.style;
-        style.position = 'absolute';
-        style.padding = 0;
-        style.margin = 0;
-        style.border = 0;
-        style.outline = 0;
-        style.background = 'none';
-        input.onblur = function (event) {
-            self.stopEditing();
-        };
-        input._handleClick = function(event) {
-            // 点击在div组件上不做处理
-            if (event.target !== self.div && event.target !== input) {
-                self.stopEditing();
-            }
-        };
-        var dom = self.game.world.frontDomRoot;
-        dom.addEventListener('mousedown', input._handleClick, false);
-        dom.addEventListener('touchstart', input._handleClick, false);
-        self.game.input._inputting++;
-
-        // 再套一层div，否则由于frontDomRoot的overflow为hidden，
-        // 如果input超出边界浏览器会修改frontDomRoot的scrollLeft和scrollTop参数，
-        // 导致Dom元素布局偏差，所以特意搞了inputDiv，让浏览器修改inputDiv滚动值而不影响其他人
-        var inputDiv = document.createElement('div');         
-        inputDiv.style.width = this.game.canvas.style.width;
-        inputDiv.style.height = this.game.canvas.style.height;
-        inputDiv.style.position = 'absolute';
-        inputDiv.style.overflow = 'hidden';
-        inputDiv.appendChild(input);
-
-        dom.appendChild(inputDiv);
-        self._updateInput(input);
-        input.focus();
-
-        // textComponent的WorldTransform变化时需要更新native元素位置
-        self._updateNativeInput();
-        textComponent.phaser.worldTransformChangedCallback = this._updateNativeInput.bind(self);
-        textComponent.phaser.worldTransformChangedContext = textComponent;
     }
 };
 
@@ -541,12 +576,14 @@ InputField.prototype._updateInput = function(input) {
     }
     input._lastUpdate = now;
 
-    var textComponent = this.textComponent;
-    if (textComponent.textPhaser instanceof Phaser.Text) {
-        input.style.font = textComponent.textPhaser.style.font;
+    if (!window.__wx) {
+        var textComponent = this.textComponent;
+        if (textComponent.textPhaser instanceof Phaser.Text) {
+            input.style.font = textComponent.textPhaser.style.font;
+        }
+        input.style.fontSize = textComponent.fontSize + 'px';
+        input.style.color = textComponent.color.toString();
     }
-    input.style.fontSize = textComponent.fontSize + 'px';
-    input.style.color = textComponent.color.toString();
 
     // 更新值
     if (input._lastValue !== input.value) {
@@ -569,12 +606,21 @@ InputField.prototype.getInput = function() {
 InputField.prototype.cancelEditing = function() {
     var input = this._input;
     if (input) {
-        this._input = null;
-        this.game.input._inputting--;
-        var dom = this.game.world.frontDomRoot;
-        dom.removeEventListener('mousedown', input._handleClick, false);
-        dom.removeEventListener('touchstart', input._handleClick, false);
-        qc.Util.removeHTML(input.parentNode);
+        if (window.__wx) {
+            this._input = null;
+            wx.hideKeyboard();
+            wx.offKeyboardConfirm();
+            wx.offKeyboardInput();
+            wx.offKeyboardComplete();
+        }
+        else {
+            this._input = null;
+            this.game.input._inputting--;
+            var dom = this.game.world.frontDomRoot;
+            dom.removeEventListener('mousedown', input._handleClick, false);
+            dom.removeEventListener('touchstart', input._handleClick, false);
+            qc.Util.removeHTML(input.parentNode);
+        }
     }
 };
 
@@ -606,8 +652,8 @@ InputField.prototype.onDestroy = function() {
  */
 InputField.prototype._dispatchAwake = function() {
     Node.prototype._dispatchAwake.call(this);
-    
-    this._checkVisibility();  
+
+    this._checkVisibility();
 };
 
 /**
@@ -621,7 +667,7 @@ InputField.prototype.onVisibleChange = function() {
 /**
  * 检测是否世界可见，不可见是隐藏相关元素
  * @private
- */    
+ */
 InputField.prototype._checkVisibility = function() {
     var visible = this.isWorldVisible();
     this.div.style.display = visible ? 'block' : 'none';

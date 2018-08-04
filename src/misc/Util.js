@@ -140,11 +140,15 @@ qc.Util = {
 
                     if (game.debug.on)
                         // 开发模式，弹出提示框
-                        alert(str);
+                        if (!window.__wx)
+                            alert(str);
+                        else {
+                            wx.showModal({ title : "", content : str, showCancel : false });
+                        }
                 }
             }
             else
-                console.trace(str);
+                console.error(str);
         }
     },
 

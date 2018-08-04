@@ -53,5 +53,9 @@ Object.defineProperties(SoundAsset.prototype, {
  * @internal
  */
 SoundAsset.prototype.unload = function(game) {
+    if (window.__wx) {
+        // 微信需要销毁音频实例
+        this.sound.destroy();
+    }
     game.assets._cache.removeSound(this.key);
 };

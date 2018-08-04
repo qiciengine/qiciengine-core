@@ -31,7 +31,7 @@ SoundManager.prototype._boot = function() {
     var phaserSound = this.phaser;
     var input = this.game.input;
 
-    if (!phaserSound.game.device.cocoonJS && phaserSound.game.device.iOS || (window['PhaserGlobal'] && window['PhaserGlobal'].fakeiOSTouchLock))
+    if (!window.__wx && !phaserSound.game.device.cocoonJS && phaserSound.game.device.iOS || (window['PhaserGlobal'] && window['PhaserGlobal'].fakeiOSTouchLock))
     {
         input.touch.callbackContext = phaserSound;
 

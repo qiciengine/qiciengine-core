@@ -33,6 +33,9 @@ var Assets = qc.Assets = function(game, loader, cache) {
     // 批量加载的标识
     this.batchLoadFlag = false;
 
+    // 是否在批量加载中的标识
+    this.inBatchLoadFlag = false;
+
     /**
      * @property {number} maxRetryTimes - 资源下载失败时，最大重试次数
      */
@@ -87,11 +90,15 @@ var Assets = qc.Assets = function(game, loader, cache) {
     game.sound.phaser.onSoundDecode.add(function(key, data) {
         var soundContent = self.game.phaser.cache.getSound(key);
         if (soundContent && soundContent.decoded) {
-            var asset = new qc.SoundAsset(data.key, data.url, soundContent, data.meta);
-            game.assets.cache(data.key, data.url, asset);
+            var asset = game.assets.find(key);
+            if (!asset) {
+                var asset = new qc.SoundAsset(key, key, soundContent, {uuid: key, type: AssetUtil.ASSET_SOUND});
+                game.assets.cache(key, key, asset);
+            }
         }
 
-        data.nextStep();
+        if (data && data.nextStep)
+            data.nextStep();
     });
 
     // 加载内置资源
@@ -211,11 +218,15 @@ Object.defineProperties(Assets.prototype, {
  * @param callback - 全部加载完毕的回调
  */
 Assets.prototype.loadBatch = (function(){
+    var self = this;
     var loadItem = function(assets, item, items, callback) {
+        assets.inBatchLoadFlag = true;
         item.loaded = false;
-        assets.load(item.key, item.url, function(asset){
-            item.loaded = true;
+        assets.load(item.key, item.url, function(asset, dependenceAsset){
+            if (asset)
+                item.loaded = true;
             item.asset = asset;
+            item.dependenceAsset = dependenceAsset;
             // 单个回调
             if (item.callback) item.callback(item);
             // 检测是否都加载完毕
@@ -224,6 +235,10 @@ Assets.prototype.loadBatch = (function(){
                     return;
                 }
             }
+
+            // 批量加载完成
+            assets.inBatchLoadFlag = false;
+
             // 全部加载完毕，执行回调
             callback(items);
         }, item.override, item.isRaw);
@@ -285,6 +300,13 @@ Assets.prototype._internalLoad = function(assetInfo) {
         // 内置资源，不需要进行加载，_complete 事件由 _loadBuiltin 中 _parseAssets 成功之后触发
         return;
 
+    if (window.assetDataMap && window.assetDataMap[url])
+        assetInfo.data = window.assetDataMap[url];
+
+    if (window.__wx)
+        // 微信需要判断本地是否存在，存在的话加载本地文件
+        AssetUtil.wxReadAsset(self.game, assetInfo);
+
     // 成功后需要回调通知
     var loader = self._loader;
     if (assetInfo.retry === 0) {
@@ -293,6 +315,14 @@ Assets.prototype._internalLoad = function(assetInfo) {
         else
             self._complete[url].push(assetInfo);
     }
+
+    if (assetInfo.data) {
+        // 资源已从本地加载，直接调用回调
+        loader.onFileComplete.dispatch(0, url, true);
+        return;
+    }
+
+    self.game.log.trace('Asset {0} ready to download from network.', url);
 
     // 加载需要区分3种：声音资源、原始资源和打包资源
     if (assetInfo.isSound) {
@@ -624,7 +654,11 @@ Assets.prototype.clear = function() {
     });
     keys = Object.keys(self._assets);
     keys.forEach(function(key) {
-        if (key !== '__builtin_resource__') delete self._assets[key];
+        if (key !== '__builtin_resource__') {
+            if (self._assets[key] && self._assets[key].unload)
+                self._assets[key].unload(self.game);
+            delete self._assets[key];
+        }
     });
 };
 
@@ -676,17 +710,18 @@ Assets.prototype._parseAsset = function(key) {
 
         // 如果是预制的话，需要等待依赖资源下载完毕后才能认为成功了
         // 场景也算预制，但其依赖资源在preload中再加载
+        // 若为批量加载，则场景也要等待依赖资源下载完毕
         var asset = self.find(key);
         if (asset &&
-            asset.meta.type !== AssetUtil.ASSET_SCENE &&
+            (asset.meta.type !== AssetUtil.ASSET_SCENE || self.inBatchLoadFlag) &&
             asset.hasUnloadedDependence && asset.hasUnloadedDependence(self.game)) {
             // 加载依赖资源
             for (var i in asset.dependences) {
                 var data = asset.dependences[i];
                 var callback = function(data) {
                     var data = data;
-                    return (function(a) {
-                        if (!a)
+                    return (function(a, dependenceAsset, flag) {
+                        if (!a && !dependenceAsset)
                         {
                             self.game.log.important('预制的依赖资源({0})加载失败.', data.uuid);
                             // 资源加载失败，对应的 uuid 依赖也标识为 ok，免得会一直有依赖的资源没下载完毕
@@ -695,6 +730,15 @@ Assets.prototype._parseAsset = function(key) {
                                 info.ok = true;
                         }
 
+                        if (self.inBatchLoadFlag && !flag) {
+                            // 批量加载时，依赖资源下载完毕也进行通知
+                            var assetsInfos = self._complete[key];
+                            if (assetsInfos) {
+                                if (assetsInfos[0] && assetsInfos[0].callback) {
+                                    assetsInfos[0].callback(null, a, true);
+                                }
+                            }
+                        }
 
                         // 检查下是不是都加载完毕了
                         if (asset.hasUnloadedDependence(self.game)) return;
@@ -704,7 +748,12 @@ Assets.prototype._parseAsset = function(key) {
                     });
                 }
 
-                self.loadByUUID(data.uuid, callback(data), false, true);
+                var inPrefab = true;
+                if (self.inBatchLoadFlag)
+                    // 批量加载时，预制中的依赖资源也进行数量统计
+                    inPrefab = false;
+
+                self.loadByUUID(data.uuid, callback(data), false, inPrefab);
             }
             return;
         }

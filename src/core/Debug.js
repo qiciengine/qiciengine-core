@@ -113,7 +113,12 @@ Object.defineProperties(Debug.prototype, {
                         for (var i = 0; i < cmdList.length; i++)
                         {
                             try {
-                                var ret = eval(cmdList[i]);
+                                var ret;
+                                if (!window.__wx)
+                                    ret = eval(cmdList[i]);
+                                else {
+                                    ret = qc.Util.formatString.apply(null, ["{0}", cmdList[i]]);
+                                }
                                 game.log.remoteReply(ret);
                             }
                             catch(e)

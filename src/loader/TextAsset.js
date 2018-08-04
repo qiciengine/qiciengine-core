@@ -15,7 +15,7 @@ var TextAsset = qc.TextAsset = function(key, url, data, meta) {
      * @property {string} key - 图集的标志
      * @readonly
      */
-    this.key = key;
+    this.key = url;
 
     /**
      * @property {string} url - 资源的网址
@@ -52,7 +52,7 @@ Object.defineProperties(TextAsset.prototype, {
  * @param game
  * @internal
  */
-SoundAsset.prototype.unload = function(game) {
+TextAsset.prototype.unload = function(game) {
     game.assets._cache.removeText(this.key);
 };
 

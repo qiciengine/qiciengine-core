@@ -3075,7 +3075,7 @@ var dragonBones;
 
         Bone.prototype._arriveAtFrame = function (frame, timelineState, animationState, isCross) {
             if (frame) {
-                var mixingType = animationState.getMixingTransform(name);
+                var mixingType = animationState.getMixingTransform(this.name);
                 if (animationState.displayControl && (mixingType == 2 || mixingType == -1)) {
                     if (!this.displayController || this.displayController == animationState.name) {
                         var tansformFrame = frame;

@@ -254,7 +254,7 @@ ScrollView.prototype.onDestroy = function() {
  * 更新
  */
 ScrollView.prototype.update = function() {
-    this._updateBounds();
+    // this._updateBounds();
 };
 
 /**
@@ -405,7 +405,7 @@ ScrollView.prototype._updateVelocity = function() {
         return;
     }
 
-    this._updateBounds();
+    // this._updateBounds();
     var deltaTime = this.game.time.deltaTime;
     var offset = this._calculateOffset(0, 0);
     var position = new qc.Point(this.content.x, this.content.y);
@@ -414,6 +414,7 @@ ScrollView.prototype._updateVelocity = function() {
     if (!this._isDragging &&
         ((offset.x !== 0 || offset.y !== 0) ||
         (this._velocity.x !== 0 || this._velocity.y !== 0))) {
+        this._updateBounds();
 
         this._calcVelocityEffect(position, offset, deltaTime, 'x');
         this._calcVelocityEffect(position, offset, deltaTime, 'y');
@@ -430,6 +431,8 @@ ScrollView.prototype._updateVelocity = function() {
     }
 
     if (this._isDragging && this.inertia) {
+        this._updateBounds();
+
         var vx = this.content.x - this._preContentPosition.x;
         var vy = this.content.y - this._preContentPosition.y;
 

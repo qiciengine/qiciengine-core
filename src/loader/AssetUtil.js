@@ -32,6 +32,9 @@ var AssetUtil = qc.AssetUtil = {
     parse : function(game, assetInfo, nextStep) {
         // 进行解压
         var files, key = assetInfo.key, url = assetInfo.url;
+
+        // 本地文件读取的数据
+        var data = assetInfo.data;
         if (!/\.bin$/.test(url)) {
             // 非 bin 资源
             if (assetInfo.isRaw) {
@@ -45,13 +48,50 @@ var AssetUtil = qc.AssetUtil = {
                     var asset = new qc.SoundAsset(key, url, sound.data, {uuid: key, type: AssetUtil.ASSET_SOUND});
                     game.assets.cache(key, url, asset);
                 }
+
+                // 若为微信，则判断该声音是否为本地文件，若为本地文件，则更新 md5
+                if (window.__wx) {
+                    // 取得本地文件列表信息
+                    var localFiles = game.storage.get('localFiles') || {};
+
+                    // 取得本地资源md5列表
+                    var assetsMd5 = game.storage.get('assetsMd5') || {};
+
+                    // 缓存的文件的 key 为 Assets 之下的路径
+                    var key = url.replace('Assets/', '');
+
+                    // 该文件不在md5列表中，不处理
+                    if (assetsMd5[key]) {
+                        var localInfo = localFiles[key];
+                        if (localInfo) {
+                            // 若本地文件 md5 一样，则不保存
+                            if (localInfo['md5'] == assetsMd5[key]) {
+                                game.log.important("文件({0})md5一致，不缓存。", url);
+
+                                // 更新下访问时间
+                                localInfo['time'] = game.time.now;
+                                // 延迟写缓存
+                                game.storage.delaySet('localFiles', localFiles, 10000);
+                            }
+                        }
+                        else {
+                            localInfo = {};
+
+                            // 延迟更新文件列表
+                            localInfo['md5']  = assetsMd5[key];
+                            localInfo['time'] = game.time.now;
+                            localFiles[key]   = localInfo;
+                            game.storage.delaySet('localFiles', localFiles, 10000);
+                        }
+                    }
+                }
             }
             if (nextStep) nextStep();
             return;
         }
         else if (!assetInfo.isSound) {
             // json 方式
-            var data = game.assets._cache.getText(url);
+            data = data || game.assets._cache.getText(url);
             delete game.assets._cache._text[url];
 
             try {
@@ -67,7 +107,7 @@ var AssetUtil = qc.AssetUtil = {
         }
         else {
             // 二进制方式
-            var data = game.assets._cache.getBinary(url);
+            data = data || game.assets._cache.getBinary(url);
             delete game.assets._cache._binary[url];
 
             var rawData, cursor;
@@ -105,6 +145,11 @@ var AssetUtil = qc.AssetUtil = {
 
         // JSON 解析出meta内容
         var meta = JSON.parse(files[0]);
+
+        // 微信小游戏，写入本地
+        if (window.__wx && !assetInfo.data)
+            AssetUtil.wxSaveAsset(game, url, data);
+
         switch (meta.type) {
         case AssetUtil.ASSET_ATLAS:
             return AssetUtil._parseAtlas(game, meta, JSON.parse(files[1]), files[2],
@@ -236,8 +281,9 @@ var AssetUtil = qc.AssetUtil = {
 
     // 解析字体
     _parseFont : function(game, meta, image, xml, key, url, nextStep) {
-        // xml转换下
-        xml = game.assets._loader.parseXml(xml);
+        if (!window.__wx)
+            // xml转换下
+            xml = game.assets._loader.parseXml(xml);
 
         var img = new Image();
         img.src = "data:image/png;base64," + image;
@@ -248,11 +294,31 @@ var AssetUtil = qc.AssetUtil = {
         };
         img.onload = function() {
             img.onload = undefined;
-            var font = new qc.Font(key, url, img, xml, meta);
-            font._fontFamily = qc.UIText.BITMAPFONT;
-            game.assets._cache.addBitmapFont(url, url, img, xml, font.xSpacing, font.ySpacing);
-            game.assets.cache(key, url, font);
-            nextStep();
+            if (!window.__wx) {
+                var font = new qc.Font(key, url, img, xml, meta);
+                font._fontFamily = qc.UIText.BITMAPFONT;
+                game.assets._cache.addBitmapFont(url, url, img, xml, font.xSpacing, font.ySpacing);
+                game.assets.cache(key, url, font);
+                nextStep();
+            }
+            else if (window.Tautologistics) {
+                // 微信使用 htmpparser.js 来进行解析
+                var handler = new Tautologistics.NodeHtmlParser.DefaultHandler(function(error, dom) {
+                    if (error) {
+                        game.log.error("解析字体文件{0}的 xml 失败。", url);
+                        nextStep();
+                    }
+                    else {
+                        var font = new qc.Font(key, url, img, dom, meta);
+                        font._fontFamily = qc.UIText.BITMAPFONT;
+                        game.assets._cache.addBitmapFont(url, url, img, dom, font.xSpacing, font.ySpacing);
+                        game.assets.cache(key, url, font);
+                        nextStep();
+                    }
+                });
+                var parser = new Tautologistics.NodeHtmlParser.Parser(handler);
+                parser.parseComplete(xml);
+            }
         };
     },
 
@@ -329,28 +395,84 @@ var AssetUtil = qc.AssetUtil = {
         game.assets.cache(key, url.toString(), font);
         nextStep();
 
+        var fontLoaded = function(fontName) {
+            // 此时有可能游戏世界尚未创建，因此需要添加此判断
+            if (game.world) {
+                // 清除相关的字体缓存信息
+                Object.keys(PIXI.Text.fontPropertiesCache).forEach(function(font) {
+                   if (font.indexOf(meta.uuid) >= 0) {
+                       delete PIXI.Text.fontPropertiesCache[font];
+                   }
+                });
+                // 通知相关节点更新
+                AssetUtil._refreshWebFont(fontName, game.world);
+            }
+
+            // 扔出事件
+            game.assets.webFontLoaded.dispatch();
+        }
+
+        if (window.__wx) {
+            for (var i = 0; i < font._fontUrl.length; i++) {
+                // 先读取本地字体文件
+                var url = font._fontUrl[i];
+                var path = wx.env.USER_DATA_PATH + "/" + url;
+                var fs = wx.getFileSystemManager();
+                try {
+                    fs.accessSync(path);
+
+                    // 加载本地字体文件
+                    var fontName = wx.loadFont(path);
+                    if (fontName) {
+                        game.log.trace("Asset {0}->{1} load from local filesystem.", url, fontName);
+                        var font = game.assets.find(key);
+                        if (font)
+                            font.wxFontName = fontName;
+                        else
+                            game.log.error("加载本地字体" + url + "成功后取不到 font 资源");
+                        fontLoaded(fontName);
+                    }
+                }
+                catch (e) {
+                    // 本地不存在，则从网络下载
+                    // 确保目录已创建
+                    AssetUtil.wxAssureDirectory(game, url);
+
+                    wx.downloadFile({
+                        url: game.assets.baseURL + url,
+                        filePath: wx.env.USER_DATA_PATH + "/" + url,
+                        success: function(res) {
+                            // 写入本地
+                            game.log.trace("字体 {0} 下载成功. res : {1}", url, JSON.stringify(res));
+                            // 下载成功，加载本地字体文件
+                            var fontName = wx.loadFont(wx.env.USER_DATA_PATH + "/" + url);
+                            if (fontName) {
+                                game.log.trace("Asset {0}->{1} load from local filesystem.", url, fontName);
+                                var font = game.assets.find(key);
+                                if (font) {
+                                    font.wxFontName = fontName;
+                                }
+                                else
+                                    game.log.error("从网络加载本地字体" + url + "成功后取不到 font 资源");
+                                fontLoaded(fontName);
+                            }
+                        },
+                        fail: function(e){
+                            game.log.error("Download " + game.assets.baseURL + url + " fail：" + JSON.stringify(e));
+                        }
+                    });
+                }
+            }
+        }
         // webfontloader.js是第三方包，需要判断是否加载
-        if (window.WebFont) {
+        else if (window.WebFont) {
             WebFont.load({
                 timeout: 60000,
                 custom: {
                     families: [meta.uuid]
                 },
                 fontactive: function(fontName) {
-                    // 此时有可能游戏世界尚未创建，因此需要添加此判断
-                    if (game.world) {
-                        // 清除相关的字体缓存信息
-                        Object.keys(PIXI.Text.fontPropertiesCache).forEach(function(font) {
-                           if (font.indexOf(meta.uuid) >= 0) {
-                               delete PIXI.Text.fontPropertiesCache[font];
-                           }
-                        });
-                        // 通知相关节点更新
-                        AssetUtil._refreshWebFont(fontName, game.world);
-                    }
-
-                    // 扔出事件
-                    game.assets.webFontLoaded.dispatch();
+                    fontLoaded(fontName);
                 },
                 fontinactive: function(fontName) {
                     game.log.error("Load " + fontName + " fail");
@@ -477,8 +599,26 @@ var AssetUtil = qc.AssetUtil = {
 
     // Get请求
     get : function(url, onload, onerror) {
-        var xhr = AssetUtil.getXHR();
+        if (window.__wx) {
+            var header = {};
+            header['Content-Type'] = 'text/plain;charset=UTF-8';
+            // 微信环境
+            wx.request({
+                url: url,
+                header: header,
+                dataType: "text",
+                success: function(res) {
+                    onload(res.data);
+                },
+                fail: function(e) {
+                    console.log("err:" + JSON.stringify(e));
+                    onerror();
+                }
+            });
+            return;
+        }
 
+        var xhr = AssetUtil.getXHR();
         xhr.open('GET', url, true);
         xhr.responseType = 'text';
 
@@ -500,8 +640,27 @@ var AssetUtil = qc.AssetUtil = {
 
     // Post 请求
     post : function(url, strData, onload, onerror) {
-        var xhr = AssetUtil.getXHR();
+        if (window.__wx) {
+            var header = {};
+            header['Content-Type'] = 'text/plain;charset=UTF-8';
+            // 微信环境
+            wx.request({
+                url: url,
+                method: "POST",
+                data: strData,
+                header: header,
+                dataType: "text",
+                success: function(res) {
+                    onload(res.data);
+                },
+                fail: function() {
+                    onerror();
+                }
+            });
+            return;
+        }
 
+        var xhr = AssetUtil.getXHR();
         xhr.open('POST', url, true);
         xhr.responseType = 'text';
 
@@ -520,4 +679,387 @@ var AssetUtil = qc.AssetUtil = {
 
         xhr.send(strData);
     },
+
+    // 将一个 canvas 转换成 qc.Atlas 数据
+    createAtlasFromCanvas: function(game, key, canvas) {
+        var atlas = game.assets.find(key);
+        if (atlas) {
+            var baseTexture = PIXI.BaseTextureCache[key];
+            if (baseTexture && baseTexture.source == canvas) {
+                // 存在该 canvas 转换后的数据，直接返回
+                baseTexture.dirty();
+                return atlas;
+            }
+            atlas.unload(game);
+        }
+        var c = game.assets._cache;
+        PIXI.BaseTextureCache[key] = new PIXI.BaseTexture(canvas);
+        PIXI.TextureCache[key] = new PIXI.Texture(PIXI.BaseTextureCache[key]);
+        c._images[key] = { url : key, data : canvas };
+        c._images[key].frameData = new Phaser.FrameData();
+        c._images[key].frame = new Phaser.Frame(0, 0, 0, canvas.width, canvas.height, '', '');
+        c._images[key].frameData.addFrame(new Phaser.Frame(0, 0, 0, canvas.width, canvas.height, null,
+            game.math.uuid()));
+        var atlas = new qc.Atlas(key, key, c._images[key], {});
+        atlas.json = {};
+        atlas.img = canvas;
+        game.assets.cache(key, key, atlas);
+        return atlas;
+    },
+
+    // 删除无用的资源，将不在 md5 资源列表中的文件删除掉
+    wxRemoveUnusedAssets: function(game) {
+        if (!window.__wx || typeof wx.getSharedCanvas == "function")
+            return;
+        // 取得本地资源md5列表
+        var assetsMd5 = game.storage.get('assetsMd5') || {};
+
+        var fs = wx.getFileSystemManager();
+        var path = wx.env.USER_DATA_PATH + '/Assets';
+
+        var explorePath = function(dir) {
+            try {
+                var list = fs.readdirSync(dir);
+                for (var i = 0; i < list.length; i++) {
+                    var subPath = list[i];
+                    var fullPath = dir + "/" + subPath;
+                    try {
+                        var stat = fs.statSync(fullPath);
+                        if (stat.isDirectory()) {
+                            explorePath(fullPath);
+                        }
+                        else {
+                            var key = fullPath.replace(path + '/', '');
+                            if (!assetsMd5[key]) {
+                                game.log.trace("本地文件({0})不在md5列表中，删除之！", key);
+                                fs.unlink({filePath : fullPath});
+                            }
+                        }
+                    } catch(e) {
+                        game.log.important("wxRemoveUnusedAssets statSync({0}) 出错：{1}", fullPath, e);
+                    }
+                }
+            } catch (e) {
+                game.log.important("wxRemoveUnusedAssets readdirSync({0}) 出错：{1}", dir, e);
+                return;
+            }
+        };
+        explorePath(path);
+    },
+
+    // 清理空间后写入文件
+    wxCleanLocalFiles: function(game, url, data, retry) {
+        if (!window.__wx || typeof wx.getSharedCanvas == "function")
+            return;
+
+        // 取得本地文件列表信息
+        var localFiles = game.storage.get('localFiles') || {};
+
+        // 按时间进行排序
+        var sortList = [];
+        for (var key in localFiles) {
+            var value = { key : key, time : localFiles[key].time };
+            qc.Util.insertSortedList(sortList, value, function(v1, v2) {
+                return v1.time < v2.time;
+            }, true);
+        }
+
+        var fs = wx.getFileSystemManager();
+        var count = 0;
+        var maxCount = 20 * 1024 * 1024;
+        // 按照时间依次删除本地文件，直到删除的空间到达指定字节为止
+        for (var i = 0; i < sortList.length; i++) {
+            if (count >= maxCount)
+                break;
+
+            var key = sortList[i].key;
+            try {
+                var path = wx.env.USER_DATA_PATH + "/Assets/" + key;
+                var stat = fs.statSync(path);
+                count += stat.size;
+                fs.unlinkSync(path);
+            } catch(e) {
+                game.log.important("wxCleanLocalFiles statSync({0}) 出错：{1}", path, e);
+            }
+        }
+
+        // 删除完后尝试再次写入文件
+        if (retry)
+            return;
+        if (url && data)
+            qc.AssetUtil.wxWriteFile(game, url, data, true);
+    },
+
+    // 微信中确保目录存在
+    wxAssureDirectory: function(game, url) {
+        if (!window.__wx || typeof wx.getSharedCanvas == "function")
+            return;
+
+        var fs = wx.getFileSystemManager();
+        var path = "";
+        var pathList = [ wx.env.USER_DATA_PATH ];
+        pathList = pathList.concat(url.split('/'));
+        // 确保目录已创建
+        for (var i = 0; i < pathList.length - 1; i++) {
+            if (i === 0)
+                path = pathList[0];
+            else
+                path = path + "/" + pathList[i];
+            try {
+                fs.accessSync(path);
+            } catch(e) {
+                // 不存在，创建
+                try {
+                    fs.mkdirSync(path);
+                }
+                catch(e) {
+                    game.log.trace("创建目录{0}失败：{1}", path, JSON.stringify(e));
+                }
+            }
+        }
+    },
+
+    // 微信中写入本地文件
+    wxWriteFile: function(game, url, data, retry, callback) {
+        if (!window.__wx)
+            return;
+
+        // 确保目录已创建
+        AssetUtil.wxAssureDirectory(game, url);
+
+        // 写文件
+        var fs = wx.getFileSystemManager();
+        var path = wx.env.USER_DATA_PATH + "/" + url;
+        fs.writeFile({
+            filePath: path,
+            data:     data,
+            encoding: 'utf8',
+            success: function() {
+                game.log.trace("资源({0})写入本地文件", url);
+                if (callback)
+                    callback.apply(null, [url]);
+            },
+            fail: function(res) {
+                game.log.important("资源({0})写入本地文件{1}失败：{2}", url, path, res.errMsg);
+                // 写入失败，可能是空间已满，清理空间后再写入
+                fs.unlink({filePath : path});
+                AssetUtil.wxCleanLocalFiles(game, url, data, retry);
+            }
+        });
+    },
+
+    // 微信中尝试保存资源
+    wxSaveAsset: function(game, url, data) {
+        if (!window.__wx || typeof wx.getSharedCanvas == "function")
+            return;
+
+        // 取得本地文件列表信息
+        var localFiles = game.storage.get('localFiles') || {};
+
+        // 取得本地资源md5列表
+        var assetsMd5 = game.storage.get('assetsMd5') || {};
+
+        // 缓存的文件的 key 为 Assets 之下的路径
+        var key = url.replace('Assets/', '');
+
+        // 该文件不在md5列表中，不缓存
+        if (!assetsMd5[key]) {
+            game.log.important("文件({0})不在md5列表中，不缓存。", url);
+            return;
+        }
+
+        var localInfo = localFiles[key];
+        if (localInfo) {
+            // 若本地文件 md5 一样，则不保存
+            if (localInfo['md5'] == assetsMd5[key]) {
+                game.log.important("文件({0})md5一致，不缓存。", url);
+
+                // 更新下访问时间
+                localInfo['time'] = game.time.now;
+                // 延迟写缓存
+                game.storage.delaySet('localFiles', localFiles, 10000);
+                return;
+            }
+        }
+        else
+            localInfo = {};
+
+        // 延迟更新文件列表
+        localInfo['md5']  = assetsMd5[key];
+        localInfo['time'] = game.time.now;
+        localFiles[key]   = localInfo;
+        game.storage.delaySet('localFiles', localFiles, 10000);
+
+        // 写本地文件
+        AssetUtil.wxWriteFile(game, url, data);
+    },
+
+    // 尝试读取本地资源
+    wxReadAsset: function(game, assetInfo) {
+        if (!window.__wx || typeof wx.getSharedCanvas == "function")
+            return;
+
+        var url = assetInfo.url;
+
+        // 取得本地文件列表信息
+        var localFiles = game.storage.get('localFiles') || {};
+
+        // 取得本地资源md5列表
+        var assetsMd5 = game.storage.get('assetsMd5') || {};
+
+        // 缓存的文件的 key 为 Assets 之下的路径
+        var key = url.replace('Assets/', '');
+
+        // 读取本地文本
+        var readLocalFile = function(path) {
+            var fs = wx.getFileSystemManager();
+            var data;
+            try {
+                if (assetInfo.isSound) {
+                    fs.accessSync(path);
+
+                    // 音频文件，使用 wx 接口加载
+                    var data = new Audio();
+                    data.name = url;
+
+                    var playThroughEvent = function () {
+                        data.removeEventListener('canplaythrough', playThroughEvent, false);
+                        data.removeEventListener('stalled', onStalled, false);
+                        data.onerror = null;
+                    };
+                    data.onerror = function () {
+                        data.removeEventListener('canplaythrough', playThroughEvent, false);
+                        data.removeEventListener('stalled', onStalled, false);
+                        data.onerror = null;
+                        var asset = game.assets.find(url);
+                        if (asset)
+                            asset.unload(game);
+                    };
+                    var onStalled = function() {
+                        data.removeEventListener('canplaythrough', playThroughEvent, false);
+                        data.removeEventListener('stalled', onStalled, false);
+                        data.onerror = null;
+                        var asset = game.assets.find(url);
+                        if (asset)
+                            asset.unload(game);
+                    };
+
+                    data.preload = 'auto';
+                    data.src = path;
+                    data.addEventListener('canplaythrough', playThroughEvent, false);
+                    data.addEventListener('stalled', onStalled, false);
+                    assetInfo.data = data;
+
+                    game.assets._cache.addSound(url, url, data, false, true);
+
+                    return data;
+                }
+                else {
+                    data = fs.readFileSync(path, "utf8");
+                    assetInfo.data = data;
+
+                    return data;
+                }
+            } catch(e) {
+            }
+        }
+
+        // 尝试读取包里的文件
+        var data = readLocalFile(url);
+        if (data) {
+            game.log.trace('Asset {0} load from package.', url);
+            return data;
+        }
+
+        // 该文件不在md5列表中
+        if (!assetsMd5[key]) {
+            game.log.important("文件({0})不在md5列表中，不尝试读取本地资源。", url);
+            return;
+        }
+
+        var localInfo = localFiles[key];
+        if (localInfo && localInfo['md5'] == assetsMd5[key]) {
+            // 读取本地文件
+            var path = wx.env.USER_DATA_PATH + "/" + url;
+            var data = readLocalFile(path);
+
+            if (data) {
+                game.log.trace('Asset {0} load from local filesystem.', url);
+
+                // 更新文件的访问时间
+                localInfo['time'] = game.time.now;
+                localFiles[key] = localInfo;
+                game.storage.delaySet('localFiles', localFiles, 10000);
+                return data;
+            }
+            else {
+                // 读取失败，需要删除文件列表缓存
+                delete localFiles[key];
+                game.storage.delaySet('localFiles', localFiles, 10000);
+                var fs = wx.getFileSystemManager();
+                fs.unlink({filePath : path});
+            }
+        }
+    },
+
+    // 更新微信资源 md5 信息
+    updateWxResMd5: function(game, dislistUrl, assetsMd5Url, callback) {
+        AssetUtil.get(dislistUrl, function(data) {
+            try {
+                var dislist = JSON.parse(data);
+                game.log.trace("Download dislist success: {0}", data);
+
+                // 先取本地缓存的版本信息
+                var localVersion = game.storage.get('version') || '';
+                var assetsMd5    = game.storage.get('assetsMd5');
+                if (localVersion == dislist.version && assetsMd5) {
+                    // 版本一样，进入主界面
+                    game.log.trace("资源版本一致。");
+                    if (typeof callback == "function")
+                        callback.apply(null, [dislist]);
+                    return;
+                }
+
+                // 下载 md5 列表
+                AssetUtil.get(assetsMd5Url, function(data) {
+                    var md5List = {};
+                    try {
+                        md5List = JSON.parse(data);
+                        game.log.trace("下载 md5List 成功。");
+
+                        // 更新到缓存中
+                        game.storage.set('assetsMd5', md5List);
+                        game.storage.set('version', dislist.version);
+
+                        // 删除无用的资源
+                        AssetUtil.wxRemoveUnusedAssets(game);
+
+                        if (typeof callback == "function")
+                            callback.apply(null, [dislist]);
+                    }
+                    catch (e)
+                    {
+                        game.log.error('parse md5List({0}) fail.', assetsMd5Url);
+                        if (typeof callback == "function")
+                            callback.apply(null, []);
+                    }
+                }, function(){
+                    game.log.error('download md5List({0}) fail.', assetsMd5Url);
+                    if (typeof callback == "function")
+                        callback.apply(null, []);
+                });
+            }
+            catch (e)
+            {
+                game.log.error('parse dislist({0}) fail.', dislistUrl);
+                if (typeof callback == "function")
+                    callback.apply(null, []);
+                return;
+            }
+        }, function(){
+            game.log.error('download dislist({0}) fail.', dislistUrl);
+            if (typeof callback == "function")
+                callback.apply(null, []);
+        });
+    }
 };

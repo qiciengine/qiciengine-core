@@ -237,6 +237,6 @@ SceneManager.prototype._parse = function() {
         this.game.world._prefab = key;
     }
     else {
-        self.game.log.error('Can not find scene {0} from assets', state);
+        this.game.log.error('Can not find scene {0} from assets', state);
     }
 };

@@ -68,8 +68,6 @@ Phaser.Sprite.prototype.preUpdate = function() {
     }
 
     // 主调度
-    this.previousPosition.set(this.world.x, this.world.y);
-    this.previousRotation = this.rotation;
     this.world.setTo(this.game.camera.x + this.worldTransform.tx, this.game.camera.y + this.worldTransform.ty);
     this.renderOrderID = this.game.stage.currentRenderOrderID++;
 

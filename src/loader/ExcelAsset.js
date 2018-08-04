@@ -15,7 +15,7 @@ var ExcelAsset = qc.ExcelAsset = function(key, url, data, meta) {
      * @property {string} key - 图集的标志
      * @readonly
      */
-    this.key = key;
+    this.key = url;
 
     /**
      * @property {string} url - 资源的网址

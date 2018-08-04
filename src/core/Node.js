@@ -54,6 +54,9 @@ var Node = qc.Node = function(phaser, parent, uuid) {
      */
     self.static = false;
 
+    // 节点 zorder
+    self._localZOrder = 0;
+
     // 默认情况下，碰撞盒和对象的大小保持一致
     self.hitArea = undefined;
 
@@ -295,7 +298,7 @@ Object.defineProperties(Node.prototype, {
             if (!this._children) {
                 this._children = [];
                 var list = this.phaser.children;
-                for (var i = 0; i < list.length; i++) {
+                for (var i = 0, len = list.length; i < len; i++) {
                     var qc = list[i]._qc;
                     // BitmapFont和Emitter类型的children是Phaser自动生成的Sprite对象，
                     // qc对这些children对象并未封装Node的绑定
@@ -305,6 +308,24 @@ Object.defineProperties(Node.prototype, {
                 }
             }
             return this._children;
+        }
+    },
+
+    /**
+     * 节点 zorder 顺序
+     *
+     * @property localZOrder
+     * @type int
+     */
+    'localZOrder': {
+        get: function() {
+            return this._localZOrder;
+        },
+        set: function(value) {
+            this._localZOrder = value;
+            if (this.parent)
+                // 设置父节点重新排序
+                this.parent._orderDirty = true;
         }
     },
 
@@ -340,6 +361,33 @@ Object.defineProperties(Node.prototype, {
         }
     }
 });
+
+Node.prototype.preUpdate = function () {
+    if (!this._orderDirty)
+        return;
+
+    this._orderDirty = undefined;
+    if (!this.phaser || typeof this.phaser.updateZ !== "function")
+        return;
+
+    // 重排序
+    var children = this.getChildren();
+    children.sort(function(a, b) {
+        var ret = (a._localZOrder || 0) - (b._localZOrder || 0);
+        if (ret === 0)
+            return a.phaser.z - b.phaser.z;
+        else
+            return ret;
+    });
+    var list = [];
+    for (var i = 0, len = children.length; i < len; i++) {
+        var child = children[i];
+        list.push(child.phaser);
+    }
+    this.phaser.children = list;
+    this.phaser.updateZ();
+    this._children = null;
+}
 
 /**
  * 是否可见
@@ -575,6 +623,7 @@ Node.prototype.addChildAt = function(child, index) {
     else {
         this.phaser.addChildAt(child.phaser, index);
     }
+    this._orderDirty = true;
 
     // 派发孩子变化事件
     this._dispatchModelChangeEvent('parent', child);
@@ -625,6 +674,8 @@ Node.prototype.setChildIndex = function(child, index) {
     }
     phaserChildren.splice(currentIndex, 1); //remove from old position
     phaserChildren.splice(index, 0, child.phaser); //add at new position
+    if (this.phaser.updateZ)
+        this.phaser.updateZ();
 
     child.phaser.displayChanged(qc.DisplayChangeStatus.ORDER);
 
@@ -906,6 +957,21 @@ Node.prototype._notifyVisibleChanged = function(isVisible) {
     while (i--) {
         if (!children[i].visible) continue;
         children[i]._notifyVisibleChanged(isVisible);
+    }
+};
+
+/**
+ * 通知孩子，节点的缓存信息发生了变化
+ * @private
+ */
+Node.prototype._notifyCacheChanged = function(enable) {
+    this.cacheEnable = enable;
+
+    var children = this._children;
+    if (!children) children = this.children;
+    var i = children.length;
+    while (i--) {
+        children[i]._notifyCacheChanged(enable);
     }
 };
 
